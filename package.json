@@ -1,0 +1,29 @@
+{
+  "name": "codesync",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev": "pnpm -r run dev --parallel",
+    "lint": "pnpm -r run lint",
+    "test": "vitest run",
+    "typecheck": "pnpm -r run typecheck"
+  },
+  "devDependencies": {
+    "prisma": "5.22.0",
+    "typescript": "^5.2.2",
+    "vitest": "^5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msgpackr-extract",
+      "unrs-resolver",
+      "workerd"
+    ]
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "ts-node": "^10.9.2"
+  }
+}

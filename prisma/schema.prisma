@@ -1,0 +1,493 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique @db.Citext
+  passwordHash        String?
+  authProvider        String // 'credentials' | 'google' | 'github'
+  emailVerifiedAt     DateTime?
+  status              String    @default("active") // 'active' | 'suspended' | 'deleted' | 'pending_deletion'
+  deletionRequestedAt DateTime?
+  mfaSecret           String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  profile                  Profile?
+  projects                 Project[]
+  userSkills               UserSkill[]
+  resume                   Resume?
+  experiences              Experience[]
+  educations               Education[]
+  applications             Application[]
+  invitationsReceived      Invitation[]              @relation("InvitedUser")
+  invitationsSent          Invitation[]              @relation("InvitingUser")
+  projectMembers           ProjectMember[]
+  savedProjects            SavedProject[]
+  savedDevelopers          SavedDeveloper[]
+  savedSearches            SavedSearch[]
+  notifications            Notification[]
+  reportsFiled             Report[]                  @relation("Reporter")
+  reviewsGiven             Review[]                  @relation("Reviewer")
+  reviewsReceived          Review[]                  @relation("Reviewee")
+  conversationParticipants ConversationParticipant[]
+  requestedSkills          Skill[]                   @relation("RequestedBy")
+  adminActions             AdminAction[]
+  platformConfigs          PlatformConfig[]          @relation("UpdatedBy")
+  tasksAssigned            Task[]
+  Match                    Match[]
+}
+
+model Profile {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  username               String   @unique @db.Citext
+  displayName            String
+  avatarUrl              String?
+  bio                    String?  @db.VarChar(280)
+  location               String?
+  timezone               String?
+  availability           String   @default("open_to_projects") // available, open_to_projects, busy, not_looking
+  experienceLevel        String // beginner, intermediate, advanced, expert
+  preferredCollaboration String[] // array of enums
+  profileVisibility      String   @default("public") // public, unlisted
+  githubUrl              String?
+  linkedinUrl            String?
+  portfolioUrl           String?
+  websiteUrl             String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Skill {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  category  String
+  aliases   String[]
+  status    String   @default("approved") // approved, pending
+  createdBy String?
+
+  creator User? @relation("RequestedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  userSkills        UserSkill[]
+  projectSkills     ProjectSkill[]
+  projectRoleSkills ProjectRoleSkill[]
+}
+
+model UserSkill {
+  id               String @id @default(cuid())
+  userId           String
+  skillId          String
+  proficiency      String // beginner, intermediate, advanced, expert
+  yearsExperience  Int?
+  endorsementCount Int    @default(0)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId])
+}
+
+model Resume {
+  id       String    @id @default(cuid())
+  userId   String    @unique
+  fileUrl  String
+  status   String    @default("pending") // pending, parsed, failed
+  parsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  company     String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Education {
+  id          String    @id @default(cuid())
+  userId      String
+  institution String
+  degree      String
+  field       String
+  startDate   DateTime
+  endDate     DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id                    String    @id @default(cuid())
+  ownerId               String
+  name                  String
+  slug                  String    @unique
+  description           String
+  problemStatement      String?
+  goals                 String?
+  category              String
+  status                String    @default("draft") // draft, open, in_progress, paused, completed, archived
+  teamSizeCurrent       Int       @default(1)
+  teamSizeTarget        Int
+  durationEstimate      String?
+  weeklyCommitment      String?
+  remoteFlag            Boolean   @default(true)
+  collaborationType     String[]
+  visibility            String    @default("open_source") // open_source, private
+  repoUrl               String?
+  demoUrl               String?
+  tags                  String[]
+  deadline              DateTime?
+  experienceRequirement String?
+  publishedAt           DateTime?
+  moderationHidden      Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  projectSkills  ProjectSkill[]
+  projectRoles   ProjectRole[]
+  projectMembers ProjectMember[]
+  applications   Application[]
+  invitations    Invitation[]
+  matches        Match[]
+  workspace      Workspace?
+  reviews        Review[]
+}
+
+model ProjectSkill {
+  id              String @id @default(cuid())
+  projectId       String
+  skillId         String
+  requirementType String // required, preferred
+  minProficiency  String // beginner, intermediate, advanced, expert
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, skillId])
+}
+
+model ProjectRole {
+  id             String @id @default(cuid())
+  projectId      String
+  title          String
+  slotsAvailable Int
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  projectRoleSkills ProjectRoleSkill[]
+  projectMembers    ProjectMember[]
+  applications      Application[]
+}
+
+model ProjectRoleSkill {
+  id              String @id @default(cuid())
+  projectRoleId   String
+  skillId         String
+  requirementType String // required, preferred
+  minProficiency  String // beginner, intermediate, advanced, expert
+
+  projectRole ProjectRole @relation(fields: [projectRoleId], references: [id], onDelete: Cascade)
+  skill       Skill       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([projectRoleId, skillId])
+}
+
+model ProjectMember {
+  id        String    @id @default(cuid())
+  projectId String
+  userId    String
+  roleId    String?
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+  status    String    @default("active") // active, left, removed
+
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role    ProjectRole? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, userId])
+}
+
+model Application {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  roleId    String?
+  message   String
+  status    String   @default("applied") // applied, under_review, shortlisted, interviewing, accepted, rejected, withdrawn
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role    ProjectRole? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+}
+
+model Invitation {
+  id                 String   @id @default(cuid())
+  projectId          String
+  invitedUserId      String
+  invitedByUserId    String
+  matchScoreSnapshot Float
+  reasonSnapshot     Json
+  status             String   @default("invited") // invited, accepted, declined
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  project      Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invitedUser  User    @relation("InvitedUser", fields: [invitedUserId], references: [id], onDelete: Cascade)
+  invitingUser User    @relation("InvitingUser", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, invitedUserId])
+}
+
+model Match {
+  id               String   @id @default(cuid())
+  userId           String
+  projectId        String
+  score            Float
+  factorBreakdown  Json
+  algorithmVersion Int
+  computedAt       DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+model Recommendation {
+  id          String    @id @default(cuid())
+  userId      String
+  targetType  String // project, developer
+  targetId    String
+  surfacedAt  DateTime  @default(now())
+  dismissedAt DateTime?
+}
+
+model Conversation {
+  id        String  @id @default(cuid())
+  type      String // dm, project
+  projectId String?
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String    @id @default(cuid())
+  conversationId String
+  userId         String
+  lastReadAt     DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  attachmentUrl  String?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationPreference {
+  id       String  @id @default(cuid())
+  userId   String
+  category String
+  channel  String // email, in_app, push
+  enabled  Boolean @default(true)
+
+  @@unique([userId, category, channel])
+}
+
+model SavedProject {
+  id        String   @id @default(cuid())
+  userId    String
+  targetId  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetId])
+}
+
+model SavedDeveloper {
+  id        String   @id @default(cuid())
+  userId    String
+  targetId  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetId])
+}
+
+model SavedSearch {
+  id           String  @id @default(cuid())
+  userId       String
+  queryParams  Json
+  alertEnabled Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Workspace {
+  id        String @id @default(cuid())
+  projectId String @unique
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  tasks          Task[]
+  milestones     Milestone[]
+  projectLinks   ProjectLink[]
+  activityEvents ActivityEvent[]
+}
+
+model Task {
+  id          String  @id @default(cuid())
+  workspaceId String
+  title       String
+  status      String  @default("todo") // todo, in_progress, done
+  assigneeId  String?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignee  User?     @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  workspaceId String
+  title       String
+  targetDate  DateTime?
+  completedAt DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model ProjectLink {
+  id          String @id @default(cuid())
+  workspaceId String
+  label       String
+  url         String
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model ActivityEvent {
+  id          String   @id @default(cuid())
+  workspaceId String
+  type        String // member_joined, task_updated, etc
+  actorId     String
+  metadata    Json
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id         String    @id @default(cuid())
+  projectId  String
+  reviewerId String
+  revieweeId String
+  rating     Int
+  comment    String
+  createdAt  DateTime  @default(now())
+  visibleAt  DateTime?
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reviewer User    @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee User    @relation("Reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+}
+
+model PlatformConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  user User? @relation("UpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+}
+
+model Report {
+  id              String   @id @default(cuid())
+  reporterId      String
+  targetType      String // user, project, message
+  targetId        String
+  reason          String
+  status          String   @default("open") // open, actioned, dismissed
+  resolutionNotes String?
+  createdAt       DateTime @default(now())
+
+  reporter User @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+}
+
+model AdminAction {
+  id         String   @id @default(cuid())
+  adminId    String
+  actionType String
+  targetType String
+  targetId   String
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+}
+
+model AnalyticsSnapshot {
+  id           String   @id @default(cuid())
+  metricName   String
+  metricValue  Float
+  snapshotDate DateTime
+}

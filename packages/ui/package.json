@@ -1,0 +1,21 @@
+{
+  "name": "@codesync/ui",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.tsx",
+  "scripts": {
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@codesync/config": "workspace:*",
+    "@types/react": "^18.2.33",
+    "@types/react-dom": "^18.2.14",
+    "eslint": "^8.52.0",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
