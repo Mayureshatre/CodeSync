@@ -10,14 +10,21 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@codesync/shared-types": "workspace:*",
+    "@codesync/ui": "workspace:*",
+    "@hookform/resolvers": "^5.9.1",
+    "bcryptjs": "^3.0.3",
+    "lucide-react": "^1.41.0",
     "next": "14.2.3",
+    "next-auth": "^4.24.15",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@codesync/ui": "workspace:*",
-    "@codesync/shared-types": "workspace:*"
+    "react-hook-form": "^7.87.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@codesync/config": "workspace:*",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.33",
     "@types/react-dom": "^18.2.14",

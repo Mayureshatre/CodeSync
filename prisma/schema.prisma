@@ -16,6 +16,7 @@ model User {
   status              String    @default("active") // 'active' | 'suspended' | 'deleted' | 'pending_deletion'
   deletionRequestedAt DateTime?
   mfaSecret           String?
+  sessionVersion      Int       @default(1)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
