@@ -1,9 +1,13 @@
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 import { verifyCredentials } from "../server/services/authService";
 import { prisma } from "../server/db";
+
+export function getCurrentSession() {
+  return getServerSession(authOptions);
+}
 
 export const authOptions: NextAuthOptions = {
   session: {

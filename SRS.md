@@ -264,7 +264,7 @@ Save Projects, Save Developers, Save Searches (with optional alert: notify me wh
 Categories: Project Matches, Applications, Invitations, Messages, Project Activity, Platform Updates — each independently toggleable per channel (in-app / email / push). Push is web-push (Phase 2+); in-app and email are MVP. Every notification links directly to the relevant object (project, application, conversation).
 
 ### 12.12 Search & Discovery
-- **Developer search:** filter by skill, experience, role, location, availability, project interests, technology.
+- **Developer search:** filter by skill, experience, location, availability, project interests, technology.
 - **Project search:** filter by skill, technology, category, team size, duration, difficulty, availability, project type.
 - Both support sort (relevance/match score, recency, popularity), saved searches with alerts, and are backed by PostgreSQL full-text search + trigram similarity at MVP scale (see §16 stack rationale); natural-language search (§15) is Phase 3.
 
