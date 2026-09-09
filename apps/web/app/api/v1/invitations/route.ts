@@ -1,0 +1,17 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { getInvitationsForDeveloper } from '../../../../src/server/services/invitationService';
+
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+    }
+
+    const invitations = await getInvitationsForDeveloper(session.user.id);
+    return NextResponse.json({ data: invitations });
+  } catch (error: any) {
+    return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } }, { status: 500 });
+  }
+}

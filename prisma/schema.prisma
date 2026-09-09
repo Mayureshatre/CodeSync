@@ -192,6 +192,7 @@ model ProjectRole {
   projectRoleSkills ProjectRoleSkill[]
   projectMembers    ProjectMember[]
   applications      Application[]
+  invitations       Invitation[]
 }
 
 model ProjectRoleSkill {
@@ -243,15 +244,17 @@ model Invitation {
   projectId          String
   invitedUserId      String
   invitedByUserId    String
+  roleId             String?
   matchScoreSnapshot Float
   reasonSnapshot     Json
   status             String   @default("invited") // invited, accepted, declined
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  project      Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  invitedUser  User    @relation("InvitedUser", fields: [invitedUserId], references: [id], onDelete: Cascade)
-  invitingUser User    @relation("InvitingUser", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invitedUser  User         @relation("InvitedUser", fields: [invitedUserId], references: [id], onDelete: Cascade)
+  invitingUser User         @relation("InvitingUser", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  role         ProjectRole? @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
   @@unique([projectId, invitedUserId])
 }
