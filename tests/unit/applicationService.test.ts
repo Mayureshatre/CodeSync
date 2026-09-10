@@ -25,6 +25,17 @@ vi.mock('../../apps/web/src/server/db', () => ({
   }
 }));
 
+vi.mock('../../apps/web/src/server/services/notificationService', () => ({
+  createNotification: vi.fn().mockResolvedValue({ id: 'notif-1', payload: {} }),
+}));
+
+vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+  enqueueNotification: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { createNotification } from '../../apps/web/src/server/services/notificationService';
+import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+
 describe('applicationService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,17 +98,32 @@ describe('applicationService', () => {
         .rejects.toThrow(ConflictError);
     });
 
-    it('creates an application successfully', async () => {
-      vi.mocked(prisma.project.findUnique).mockResolvedValue({ id: 'p1', ownerId: 'owner1', status: 'open', projectRoles: [] } as any);
-      vi.mocked(prisma.application.findFirst).mockResolvedValue(null as any);
-      vi.mocked(prisma.projectMember.findUnique).mockResolvedValue(null as any);
-      vi.mocked(prisma.application.create).mockResolvedValue({ id: 'a1', status: 'applied' } as any);
+    it('creates an application and dispatches a notification successfully', async () => {
+      const mockProject = { id: 'proj-1', ownerId: 'owner-1', status: 'open', projectRoles: [{ id: 'role-1' }] };
+      vi.mocked(prisma.project.findUnique).mockResolvedValueOnce(mockProject as any);
+      vi.mocked(prisma.application.findFirst).mockResolvedValueOnce(null as any);
+      vi.mocked(prisma.projectMember.findUnique).mockResolvedValueOnce(null as any);
+      vi.mocked(prisma.application.create).mockResolvedValueOnce({ id: 'app-1', status: 'applied' } as any);
 
-      const result = await applyToProject('dev1', 'p1', { message: 'I would like to join the project.' });
-      expect(result.id).toBe('a1');
+      const result = await applyToProject('dev-1', 'proj-1', { roleId: 'role-1', message: 'I would like to join the project.' });
+
+      expect(result.id).toBe('app-1');
       expect(prisma.application.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({ status: 'applied' })
       }));
+      
+      expect(createNotification).toHaveBeenCalledWith('owner-1', 'APPLICATION', {
+        event: 'application_submitted',
+        applicationId: 'app-1',
+        projectId: 'proj-1',
+        applicantId: 'dev-1'
+      });
+      expect(enqueueNotification).toHaveBeenCalledWith({
+        notificationId: 'notif-1',
+        userId: 'owner-1',
+        category: 'APPLICATION',
+        payload: {}
+      });
     });
   });
 

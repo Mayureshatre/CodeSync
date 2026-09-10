@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError } from '../errors';
 import { InviteDeveloperInput, inviteDeveloperSchema, RespondToInvitationInput, respondToInvitationSchema } from '../../lib/validations/invitation';
 import { getAvailableInvitationActions, InvitationStatus } from '@codesync/shared-types';
+import { createNotification } from './notificationService';
+import { enqueueNotification } from '../jobs/queue';
 
 export async function inviteDeveloper(ownerId: string, projectId: string, data: InviteDeveloperInput) {
   const parsedData = inviteDeveloperSchema.parse(data);
@@ -47,7 +49,7 @@ export async function inviteDeveloper(ownerId: string, projectId: string, data: 
   }
 
   try {
-    return await prisma.invitation.create({
+    const invitation = await prisma.invitation.create({
       data: {
         projectId,
         invitedByUserId: ownerId,
@@ -58,6 +60,25 @@ export async function inviteDeveloper(ownerId: string, projectId: string, data: 
         status: 'invited',
       },
     });
+
+    try {
+      const notification = await createNotification(parsedData.invitedUserId, 'INVITATION', {
+        event: 'invitation_received',
+        invitationId: invitation.id,
+        projectId,
+        inviterId: ownerId
+      });
+      await enqueueNotification({
+        notificationId: notification.id,
+        userId: parsedData.invitedUserId,
+        category: 'INVITATION',
+        payload: notification.payload
+      });
+    } catch (notifError) {
+      console.error('Failed to dispatch invitation_received notification', notifError);
+    }
+
+    return invitation;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new ConflictError('You have already invited this developer to this project');
@@ -95,9 +116,10 @@ export async function respondToInvitation(userId: string, invitationId: string, 
     throw new ConflictError(`Invalid state transition from ${invitation.status} to ${actionStatus}`);
   }
 
+  let updatedInvitation;
   if (actionStatus === 'accepted') {
-    return prisma.$transaction(async (tx) => {
-      const updatedInvitation = await tx.invitation.update({
+    updatedInvitation = await prisma.$transaction(async (tx) => {
+      const updatedInv = await tx.invitation.update({
         where: { id: invitationId },
         data: { status: 'accepted' },
       });
@@ -122,12 +144,32 @@ export async function respondToInvitation(userId: string, invitationId: string, 
         });
       }
 
-      return updatedInvitation;
+      return updatedInv;
+    });
+  } else {
+    updatedInvitation = await prisma.invitation.update({
+      where: { id: invitationId },
+      data: { status: 'declined' },
     });
   }
 
-  return prisma.invitation.update({
-    where: { id: invitationId },
-    data: { status: 'declined' },
-  });
+  try {
+    const notification = await createNotification(invitation.invitedByUserId, 'INVITATION', {
+      event: 'invitation_responded',
+      invitationId,
+      projectId: invitation.projectId,
+      status: actionStatus,
+      responderId: userId
+    });
+    await enqueueNotification({
+      notificationId: notification.id,
+      userId: invitation.invitedByUserId,
+      category: 'INVITATION',
+      payload: notification.payload
+    });
+  } catch (notifError) {
+    console.error('Failed to dispatch invitation_responded notification', notifError);
+  }
+
+  return updatedInvitation;
 }

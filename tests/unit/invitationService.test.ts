@@ -27,6 +27,17 @@ vi.mock('../../apps/web/src/server/db', () => ({
   }
 }));
 
+vi.mock('../../apps/web/src/server/services/notificationService', () => ({
+  createNotification: vi.fn().mockResolvedValue({ id: 'notif-1', payload: {} }),
+}));
+
+vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+  enqueueNotification: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { createNotification } from '../../apps/web/src/server/services/notificationService';
+import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+
 describe('invitationService', () => {
   beforeEach(() => {
     vi.clearAllMocks();

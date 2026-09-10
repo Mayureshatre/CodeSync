@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError } from '../errors';
 import { ApplyToProjectInput, applyToProjectSchema, UpdateApplicationStatusInput, updateApplicationStatusSchema } from '../../lib/validations/application';
 import { getAvailableApplicationActions, ApplicationStatus } from '@codesync/shared-types';
+import { createNotification } from './notificationService';
+import { enqueueNotification } from '../jobs/queue';
 
 export async function applyToProject(userId: string, projectId: string, data: ApplyToProjectInput) {
   const parsedData = applyToProjectSchema.parse(data);
@@ -56,7 +58,7 @@ export async function applyToProject(userId: string, projectId: string, data: Ap
   }
 
   try {
-    return await prisma.application.create({
+    const application = await prisma.application.create({
       data: {
         projectId,
         userId,
@@ -65,6 +67,25 @@ export async function applyToProject(userId: string, projectId: string, data: Ap
         status: 'applied',
       },
     });
+
+    try {
+      const notification = await createNotification(project.ownerId, 'APPLICATION', {
+        event: 'application_submitted',
+        applicationId: application.id,
+        projectId,
+        applicantId: userId
+      });
+      await enqueueNotification({
+        notificationId: notification.id,
+        userId: project.ownerId,
+        category: 'APPLICATION',
+        payload: notification.payload
+      });
+    } catch (notifError) {
+      console.error('Failed to dispatch application_submitted notification', notifError);
+    }
+
+    return application;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new ConflictError('You have an active application for this project already');
@@ -121,9 +142,10 @@ export async function updateApplicationStatus(ownerId: string, applicationId: st
     throw new ConflictError(`Invalid state transition from ${application.status} to ${status}`);
   }
 
+  let updatedApplication;
   if (status === 'accepted') {
-    return prisma.$transaction(async (tx) => {
-      const updatedApplication = await tx.application.update({
+    updatedApplication = await prisma.$transaction(async (tx) => {
+      const updatedApp = await tx.application.update({
         where: { id: applicationId },
         data: { status },
       });
@@ -148,19 +170,39 @@ export async function updateApplicationStatus(ownerId: string, applicationId: st
         });
       }
 
-      return updatedApplication;
+      return updatedApp;
+    });
+  } else {
+    updatedApplication = await prisma.application.update({
+      where: { id: applicationId },
+      data: { status },
     });
   }
 
-  return prisma.application.update({
-    where: { id: applicationId },
-    data: { status },
-  });
+  try {
+    const notification = await createNotification(application.userId, 'APPLICATION', {
+      event: 'application_status_updated',
+      applicationId,
+      projectId: application.projectId,
+      status
+    });
+    await enqueueNotification({
+      notificationId: notification.id,
+      userId: application.userId,
+      category: 'APPLICATION',
+      payload: notification.payload
+    });
+  } catch (notifError) {
+    console.error('Failed to dispatch application_status_updated notification', notifError);
+  }
+
+  return updatedApplication;
 }
 
 export async function withdrawApplication(userId: string, applicationId: string) {
   const application = await prisma.application.findUnique({
     where: { id: applicationId },
+    include: { project: true }
   });
 
   if (!application) {
@@ -176,8 +218,27 @@ export async function withdrawApplication(userId: string, applicationId: string)
     throw new ConflictError(`Invalid state transition from ${application.status} to withdrawn`);
   }
 
-  return prisma.application.update({
+  const updatedApplication = await prisma.application.update({
     where: { id: applicationId },
     data: { status: 'withdrawn' },
   });
+
+  try {
+    const notification = await createNotification(application.project.ownerId, 'APPLICATION', {
+      event: 'application_withdrawn',
+      applicationId,
+      projectId: application.projectId,
+      applicantId: userId
+    });
+    await enqueueNotification({
+      notificationId: notification.id,
+      userId: application.project.ownerId,
+      category: 'APPLICATION',
+      payload: notification.payload
+    });
+  } catch (notifError) {
+    console.error('Failed to dispatch application_withdrawn notification', notifError);
+  }
+
+  return updatedApplication;
 }
