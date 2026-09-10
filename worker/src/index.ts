@@ -1,4 +1,5 @@
 import { Worker } from 'bullmq';
+import { startNotificationWorker } from './notificationWorker';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
@@ -15,4 +16,7 @@ matchingWorker.on('failed', (job: any, err: any) => {
   console.log(`${job?.id} has failed with ${err.message}`);
 });
 
-console.log('Worker is running...');
+// Start the notification worker
+const notificationWorker = startNotificationWorker(REDIS_URL);
+
+console.log('Workers are running...');
