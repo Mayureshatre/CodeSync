@@ -1,6 +1,8 @@
 import { prisma } from '../db';
 import { NotFoundError, ForbiddenError, ConflictError } from '../errors';
 import { ProjectInput } from '../../lib/validations/project';
+import { createNotification } from './notificationService';
+import { enqueueNotification } from '../jobs/queue';
 
 function generateSlug(name: string): string {
   return name
@@ -71,7 +73,7 @@ export async function updateProject(ownerId: string, projectId: string, data: Pr
   // For full update, we replace skills and roles entirely to keep it simple, or update them in a transaction.
   // Given Prisma's nested writes, replacing is easiest: delete old, create new.
   
-  return prisma.$transaction(async (tx) => {
+  const updatedProject = await prisma.$transaction(async (tx) => {
     // Delete existing
     await tx.projectSkill.deleteMany({ where: { projectId } });
     await tx.projectRole.deleteMany({ where: { projectId } });
@@ -125,6 +127,33 @@ export async function updateProject(ownerId: string, projectId: string, data: Pr
       }
     });
   });
+
+  // M8-D-D: Notify existing project members about the update
+  try {
+    const members = await prisma.projectMember.findMany({
+      where: { projectId, status: 'active' }
+    });
+
+    for (const member of members) {
+      if (member.userId === ownerId) continue; // Don't notify the owner
+
+      const notification = await createNotification(member.userId, 'PROJECT_ACTIVITY', {
+        event: 'project_updated',
+        projectId
+      });
+
+      await enqueueNotification({
+        notificationId: notification.id,
+        userId: member.userId,
+        category: 'PROJECT_ACTIVITY',
+        payload: notification.payload
+      });
+    }
+  } catch (notifError) {
+    console.error('Failed to dispatch project_updated notification', notifError);
+  }
+
+  return updatedProject;
 }
 
 export async function deleteProject(ownerId: string, projectId: string) {

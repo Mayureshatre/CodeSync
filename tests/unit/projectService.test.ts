@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getProjectById, deleteProject, updateProject, publishProject } from '../../apps/web/src/server/services/projectService';
 import { prisma } from '../../apps/web/src/server/db';
 import { NotFoundError, ForbiddenError } from '../../apps/web/src/server/errors';
+import { createNotification } from '../../apps/web/src/server/services/notificationService';
+import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
 
 vi.mock('../../apps/web/src/server/db', () => ({
   prisma: {
@@ -12,13 +14,27 @@ vi.mock('../../apps/web/src/server/db', () => ({
     user: {
       findUnique: vi.fn(),
     },
+    projectMember: {
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn((callback) => callback(prisma)),
     projectSkill: { deleteMany: vi.fn() },
     projectRole: { deleteMany: vi.fn() },
   }
 }));
 
+vi.mock('../../apps/web/src/server/services/notificationService', () => ({
+  createNotification: vi.fn().mockResolvedValue({ id: 'notif-1', payload: {} })
+}));
+
+vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+  enqueueNotification: vi.fn().mockResolvedValue(undefined)
+}));
+
 describe('projectService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   describe('getProjectById', () => {
     it('throws NotFoundError if project does not exist', async () => {
       vi.mocked(prisma.project.findUnique).mockResolvedValue(null);
@@ -77,6 +93,65 @@ describe('projectService', () => {
         where: { id: 'p1' },
         data: { status: 'open', publishedAt: expect.any(Date) }
       });
+    });
+  });
+
+  describe('updateProject', () => {
+    const defaultData = { name: 'Updated' } as any;
+
+    it('throws ForbiddenError if not owner', async () => {
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({ ownerId: 'owner1' } as any);
+      await expect(updateProject('user2', 'p1', defaultData)).rejects.toThrow(ForbiddenError);
+    });
+
+    it('updates project and notifies active members except owner', async () => {
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({ ownerId: 'owner1' } as any);
+      vi.mocked(prisma.project.update).mockResolvedValue({ id: 'p1', name: 'Updated' } as any);
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+        { userId: 'owner1', status: 'active' },
+        { userId: 'member1', status: 'active' },
+        { userId: 'member2', status: 'active' }
+      ] as any);
+
+      await updateProject('owner1', 'p1', defaultData);
+
+      // Core update happens
+      expect(prisma.project.update).toHaveBeenCalled();
+      
+      // Member lookup happens
+      expect(prisma.projectMember.findMany).toHaveBeenCalledWith({
+        where: { projectId: 'p1', status: 'active' }
+      });
+
+      // Notification sent to member1 and member2, NOT owner1
+      expect(createNotification).toHaveBeenCalledTimes(2);
+      expect(createNotification).toHaveBeenCalledWith('member1', 'PROJECT_ACTIVITY', expect.objectContaining({
+        event: 'project_updated',
+        projectId: 'p1'
+      }));
+      expect(createNotification).toHaveBeenCalledWith('member2', 'PROJECT_ACTIVITY', expect.objectContaining({
+        event: 'project_updated',
+        projectId: 'p1'
+      }));
+
+      // Queue is called
+      expect(enqueueNotification).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not rollback project update if notification fails', async () => {
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({ ownerId: 'owner1' } as any);
+      vi.mocked(prisma.project.update).mockResolvedValue({ id: 'p1', name: 'Updated' } as any);
+      vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
+        { userId: 'member1', status: 'active' }
+      ] as any);
+      
+      vi.mocked(createNotification).mockRejectedValueOnce(new Error('Redis is down'));
+
+      const result = await updateProject('owner1', 'p1', defaultData);
+      
+      // Update still successful
+      expect(result.id).toBe('p1');
+      expect(prisma.project.update).toHaveBeenCalled();
     });
   });
 });
