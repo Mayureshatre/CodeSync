@@ -1,6 +1,8 @@
 import { prisma } from '../db';
 import { getMatchSurfacingThreshold } from './configService';
 import { calculateProfileCompleteness } from './profileService';
+import { createNotification } from './notificationService';
+import { enqueueNotification } from '../jobs/queue';
 
 export const MATCHING_ALGORITHM_VERSION = 1;
 
@@ -217,9 +219,29 @@ export async function recomputeAndPersistMatch(userId: string, projectId: string
       where: { userId, targetType: 'project', targetId: projectId }
     });
     if (!existingRec) {
-      await prisma.recommendation.create({
+      const newRec = await prisma.recommendation.create({
         data: { userId, targetType: 'project', targetId: projectId }
       });
+
+      // M8-D-B: Trigger notification for newly created recommendation
+      try {
+        const notification = await createNotification(userId, 'PROJECT_MATCH', {
+          event: 'project_match_created',
+          projectId,
+          matchId: match.id,
+          recommendationId: newRec.id,
+          score: match.score
+        });
+
+        await enqueueNotification({
+          notificationId: notification.id,
+          userId,
+          category: 'PROJECT_MATCH',
+          payload: notification.payload
+        });
+      } catch (notifError) {
+        console.error('Failed to dispatch project_match_created notification', notifError);
+      }
     }
   }
 

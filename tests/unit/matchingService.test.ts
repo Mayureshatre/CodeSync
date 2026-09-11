@@ -1,5 +1,30 @@
-import { describe, it, expect } from 'vitest';
-import { computeMatchScore, MATCHING_ALGORITHM_VERSION } from '../../apps/web/src/server/services/matchingService';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { computeMatchScore, recomputeAndPersistMatch, MATCHING_ALGORITHM_VERSION } from '../../apps/web/src/server/services/matchingService';
+import { prisma } from '../../apps/web/src/server/db';
+import { getMatchSurfacingThreshold } from '../../apps/web/src/server/services/configService';
+import { createNotification } from '../../apps/web/src/server/services/notificationService';
+import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+
+vi.mock('../../apps/web/src/server/db', () => ({
+  prisma: {
+    user: { findUnique: vi.fn() },
+    project: { findUnique: vi.fn() },
+    match: { deleteMany: vi.fn(), upsert: vi.fn() },
+    recommendation: { findFirst: vi.fn(), create: vi.fn() }
+  }
+}));
+
+vi.mock('../../apps/web/src/server/services/configService', () => ({
+  getMatchSurfacingThreshold: vi.fn()
+}));
+
+vi.mock('../../apps/web/src/server/services/notificationService', () => ({
+  createNotification: vi.fn().mockResolvedValue({ id: 'notif-1', payload: {} })
+}));
+
+vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+  enqueueNotification: vi.fn().mockResolvedValue(undefined)
+}));
 
 describe('matchingService - computeMatchScore', () => {
   const baseUser = {
@@ -91,5 +116,115 @@ describe('matchingService - computeMatchScore', () => {
 
     expect(result?.algorithmVersion).toBe(MATCHING_ALGORITHM_VERSION);
     expect(result?.explanation).toContain('Overall');
+  });
+});
+
+describe('matchingService - recomputeAndPersistMatch', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const baseUser = {
+    id: 'u1',
+    profile: {
+      availability: 'available',
+      experienceLevel: 'intermediate',
+      preferredCollaboration: ['open_source'],
+    },
+    userSkills: [
+      { skillId: 's1', proficiency: 'intermediate', skill: { name: 'Python' } }
+    ]
+  };
+
+  const baseProject = {
+    id: 'p1',
+    status: 'open',
+    projectSkills: [
+      { skillId: 's1', requirementType: 'required', minProficiency: 'beginner' }
+    ]
+  };
+
+  it('triggers a notification when a new qualifying match is created', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(baseUser as any);
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(baseProject as any);
+    vi.mocked(getMatchSurfacingThreshold).mockResolvedValue(50);
+    vi.mocked(prisma.recommendation.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.recommendation.create).mockResolvedValue({ id: 'rec-1' } as any);
+    vi.mocked(prisma.match.upsert).mockResolvedValue({ id: 'match-1', score: 100 } as any);
+    vi.mocked(createNotification).mockResolvedValue({ id: 'notif-1', payload: {} } as any);
+
+    await recomputeAndPersistMatch('u1', 'p1');
+
+    expect(prisma.recommendation.create).toHaveBeenCalledWith({
+      data: { userId: 'u1', targetType: 'project', targetId: 'p1' }
+    });
+
+    expect(createNotification).toHaveBeenCalledWith('u1', 'PROJECT_MATCH', expect.objectContaining({
+      event: 'project_match_created',
+      projectId: 'p1',
+      matchId: 'match-1',
+      recommendationId: 'rec-1',
+      score: 100
+    }));
+
+    expect(enqueueNotification).toHaveBeenCalledWith({
+      notificationId: 'notif-1',
+      userId: 'u1',
+      category: 'PROJECT_MATCH',
+      payload: {}
+    });
+  });
+
+  it('does not duplicate notification if recommendation already exists', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(baseUser as any);
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(baseProject as any);
+    vi.mocked(getMatchSurfacingThreshold).mockResolvedValue(50);
+    vi.mocked(prisma.recommendation.findFirst).mockResolvedValue({ id: 'existing-rec' } as any);
+    vi.mocked(prisma.match.upsert).mockResolvedValue({ id: 'match-1', score: 100 } as any);
+
+    await recomputeAndPersistMatch('u1', 'p1');
+
+    expect(prisma.recommendation.create).not.toHaveBeenCalled();
+    expect(createNotification).not.toHaveBeenCalled();
+    expect(enqueueNotification).not.toHaveBeenCalled();
+  });
+
+  it('does not trigger notification if match does not meet threshold', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(baseUser as any);
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(baseProject as any);
+    vi.mocked(getMatchSurfacingThreshold).mockResolvedValue(100);
+    vi.mocked(prisma.match.upsert).mockResolvedValue({ id: 'match-1', score: 20 } as any);
+
+    await recomputeAndPersistMatch('u1', 'p1');
+
+    expect(prisma.recommendation.findFirst).not.toHaveBeenCalled();
+    expect(createNotification).not.toHaveBeenCalled();
+  });
+
+  it('does not break match creation if notification fails', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(baseUser as any);
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(baseProject as any);
+    vi.mocked(getMatchSurfacingThreshold).mockResolvedValue(50);
+    vi.mocked(prisma.recommendation.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.recommendation.create).mockResolvedValue({ id: 'rec-1' } as any);
+    vi.mocked(prisma.match.upsert).mockResolvedValue({ id: 'match-1', score: 100 } as any);
+    
+    vi.mocked(createNotification).mockRejectedValueOnce(new Error('DB error'));
+
+    const result = await recomputeAndPersistMatch('u1', 'p1');
+    
+    expect(result).toBeDefined();
+    expect(result?.id).toBe('match-1');
+  });
+
+  it('does not trigger notification if hard filters fail', async () => {
+    const user = { ...baseUser, profile: { ...baseUser.profile, availability: 'not_looking' } };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(user as any);
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(baseProject as any);
+
+    await recomputeAndPersistMatch('u1', 'p1');
+
+    expect(prisma.match.upsert).not.toHaveBeenCalled();
+    expect(createNotification).not.toHaveBeenCalled();
   });
 });
