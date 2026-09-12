@@ -284,9 +284,10 @@ model Recommendation {
 }
 
 model Conversation {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   type      String // dm, project
   projectId String?
+  updatedAt DateTime @default(now())
 
   participants ConversationParticipant[]
   messages     Message[]
