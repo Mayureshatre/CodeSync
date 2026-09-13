@@ -31,14 +31,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      
-      - name: Install pnpm
-        run: npm install -g corepack && corepack enable pnpm
 
       - name: Install dependencies
         run: pnpm install
@@ -87,3 +90,22 @@ jobs:
           NEXTAUTH_SECRET: test-secret
           NEXTAUTH_URL: http://localhost:3000
           TEST_BYPASS_TOKEN: e2e-secret
+
+      - name: Matching Benchmark
+        run: npx ts-node -O '{"module":"CommonJS"}' apps/web/scripts/benchmark-matching.ts
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
+          REDIS_URL: redis://localhost:6379
+
+      - name: Discovery/Artillery Performance Test
+        run: |
+          pnpm -F web start &
+          SERVER_PID=$!
+          npx -y wait-on tcp:3000
+          npx artillery run scripts/load-test.yml
+          kill $SERVER_PID
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
+          REDIS_URL: redis://localhost:6379
+          NEXTAUTH_SECRET: test-secret
+          NEXTAUTH_URL: http://localhost:3000
