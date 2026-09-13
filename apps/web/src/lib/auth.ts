@@ -49,6 +49,9 @@ export const authOptions: NextAuthOptions = {
         if (!user.email) return false;
         const existingUser = await prisma.user.findUnique({ where: { email: user.email } });
         
+        if (existingUser?.status === 'suspended') {
+          return '/auth/login?error=AccountSuspended';
+        }
         if (!existingUser) {
           // Auto-register OAuth users
           await prisma.user.create({
@@ -71,14 +74,19 @@ export const authOptions: NextAuthOptions = {
       // Initial sign in
       if (account && user) {
         if (account.provider === 'credentials') {
-          token.id = user.id;
-          token.sessionVersion = (user as any).sessionVersion;
+          const dbUser = await prisma.user.findUnique({ where: { id: user.id }});
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.sessionVersion = dbUser.sessionVersion;
+            token.role = dbUser.role;
+          }
         } else if (account.provider === 'google' || account.provider === 'github') {
           if (user.email) {
             const dbUser = await prisma.user.findUnique({ where: { email: user.email }});
             if (dbUser) {
               token.id = dbUser.id;
               token.sessionVersion = dbUser.sessionVersion;
+              token.role = dbUser.role;
             }
           }
         }
@@ -88,13 +96,14 @@ export const authOptions: NextAuthOptions = {
       if (token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { sessionVersion: true }
+          select: { sessionVersion: true, role: true, status: true }
         });
         
-        if (!dbUser || dbUser.sessionVersion !== token.sessionVersion) {
+        if (!dbUser || dbUser.sessionVersion !== token.sessionVersion || dbUser.status === 'suspended') {
           // Invalidate token by clearing it
           return { ...token, exp: 0 }; 
         }
+        token.role = dbUser.role; // Keep role up to date
       }
 
       return token;
@@ -104,6 +113,7 @@ export const authOptions: NextAuthOptions = {
         session.user = {
           ...session.user,
           id: token.id as string,
+          role: token.role as string,
         } as any;
       } else {
         // Force session to expire if token was invalidated

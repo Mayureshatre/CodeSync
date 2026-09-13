@@ -14,6 +14,7 @@ model User {
   authProvider        String // 'credentials' | 'google' | 'github'
   emailVerifiedAt     DateTime?
   status              String    @default("active") // 'active' | 'suspended' | 'deleted' | 'pending_deletion'
+  role                String    @default("user") // 'user' | 'moderator' | 'admin'
   deletionRequestedAt DateTime?
   mfaSecret           String?
   sessionVersion      Int       @default(1)

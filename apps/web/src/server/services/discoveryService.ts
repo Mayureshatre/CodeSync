@@ -17,6 +17,9 @@ export async function searchProjects(userId: string | null, input: ProjectSearch
   
   // Hide projects of suspended users
   conditions.push(Prisma.sql`p."ownerId" NOT IN (SELECT id FROM "User" WHERE status = 'suspended')`);
+  
+  // Hide moderated projects
+  conditions.push(Prisma.sql`p."moderationHidden" = false`);
 
   if (q) {
     const tsQuery = buildTsQuery(q);

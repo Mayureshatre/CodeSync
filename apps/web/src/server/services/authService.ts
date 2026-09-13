@@ -28,6 +28,10 @@ export async function verifyCredentials(email: string, password: string) {
     throw new AuthenticationError('Invalid credentials');
   }
 
+  if (user.status === 'suspended') {
+    throw new AuthenticationError('Account suspended');
+  }
+
   const isValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isValid) {
