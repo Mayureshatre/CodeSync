@@ -44,7 +44,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          pnpm --version
+          node --version
+          pnpm install --frozen-lockfile --reporter=append-only
 
       - name: Prisma Generate
         run: npx prisma generate
