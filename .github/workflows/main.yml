@@ -34,8 +34,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -44,10 +42,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: |
-          pnpm --version
-          node --version
-          pnpm install --frozen-lockfile --reporter=append-only
+        run: pnpm install
 
       - name: Prisma Generate
         run: npx prisma generate
