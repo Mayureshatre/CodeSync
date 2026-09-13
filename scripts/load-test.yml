@@ -1,0 +1,39 @@
+# DISCOVERY API LOAD TEST
+# Note: This tests the performance of the authenticated discovery endpoints 
+# (/api/v1/projects and /api/v1/developers) fetching pre-computed matches.
+# It does NOT benchmark the matching computation itself (matchingService.computeMatchScore).
+# See apps/web/scripts/benchmark-matching.ts for the algorithm benchmark.
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 5
+      arrivalRate: 1
+      name: "Warm up"
+scenarios:
+  - name: "Discovery Search"
+    flow:
+      - get:
+          url: "/api/auth/csrf"
+          capture:
+            - json: "$.csrfToken"
+              as: "csrfToken"
+            - header: "set-cookie"
+              as: "csrfCookie"
+      - post:
+          url: "/api/auth/callback/credentials"
+          headers:
+            Cookie: "{{ csrfCookie }}"
+            Content-Type: "application/x-www-form-urlencoded"
+          body: "email=e2e1%40example.com&password=Password123!&csrfToken={{ csrfToken }}&redirect=false"
+          capture:
+            - header: "set-cookie"
+              as: "sessionCookie"
+      - get:
+          url: "/api/v1/projects"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+      - think: 1
+      - get:
+          url: "/api/v1/developers"
+          headers:
+            Cookie: "{{ sessionCookie }}"

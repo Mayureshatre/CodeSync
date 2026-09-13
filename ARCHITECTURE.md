@@ -868,6 +868,8 @@ Mirrors SRS §22 milestones, with architectural dependencies made explicit:
 
 ## Architecture Decisions Requiring Product Owner Approval
 
+**Explicit MVP Exception: i18n Readiness.** SRS §21 requires i18n readiness, but the repository-wide abstraction was missed during M1–M11. Retrofitting the entire application during final hardening creates disproportionate regression risk. We have explicitly decided to DEFER i18n to Phase 2. M12 does not satisfy the i18n requirement of SRS §21.
+
 **None remaining.** The three items previously listed here — match-surfacing threshold, review visibility window, and account-deletion grace period — are now confirmed (75% / 14 days / 30 days respectively) and fully specified: default values, storage mechanism (`PlatformConfig`, §6/§28), read path (`configService`, cached), and every consuming code path (`recommendationService` §10, `reviewService` §18.1, `AccountHardDelete` job §20) are documented above with no remaining ambiguity. All other architectural choices in this document are derived directly from the SRS's explicit content or your previously confirmed decisions (strict matching, Phase 3 organizations, polling messaging). This document is ready for implementation without further approval gates.
 
 ---

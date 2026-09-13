@@ -1,0 +1,89 @@
+name: CodeSync CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: codesync
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        run: npm install -g corepack && corepack enable pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Prisma Generate
+        run: npx prisma generate
+
+      - name: Prisma Migrate & Seed
+        run: |
+          npx prisma migrate deploy
+          npx ts-node prisma/seed-e2e.ts
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit & Integration Tests
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
+          REDIS_URL: redis://localhost:6379
+          NEXTAUTH_SECRET: test-secret
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Build
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
+          REDIS_URL: redis://localhost:6379
+          NEXTAUTH_SECRET: test-secret
+          NEXTAUTH_URL: http://localhost:3000
+          SKIP_ENV_VALIDATION: true
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Playwright E2E & Accessibility Tests
+        run: npx playwright test
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
+          REDIS_URL: redis://localhost:6379
+          NEXTAUTH_SECRET: test-secret
+          NEXTAUTH_URL: http://localhost:3000
+          TEST_BYPASS_TOKEN: e2e-secret
