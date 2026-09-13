@@ -17,7 +17,7 @@ export function getPollingCursor(messages: Message[]): string | undefined {
   if (realMessages.length === 0) return undefined;
   // Assuming messages array is in chronological order (oldest first, newest last)
   // as rendered by MessageThread.
-  return realMessages[realMessages.length - 1].id;
+  return realMessages[realMessages.length - 1]?.id;
 }
 
 export type Conversation = {

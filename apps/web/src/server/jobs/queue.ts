@@ -16,6 +16,10 @@ export const digestQueue = new Queue('digest', {
   connection: { url: REDIS_URL }
 });
 
+export const reviewQueue = new Queue('review', {
+  connection: { url: REDIS_URL }
+});
+
 export async function scheduleWeeklyDigest() {
   try {
     // Run at 9:00 AM every Monday (0 9 * * 1)
@@ -70,5 +74,19 @@ export async function enqueueNotification(payload: NotificationJobPayload, jobId
     await notificationQueue.add('deliver', payload, opts);
   } catch (error) {
     console.error('Failed to enqueue notification', error);
+  }
+}
+
+export async function enqueueReviewVisibility(reviewId: string, delayMs: number) {
+  try {
+    await reviewQueue.add('reveal-review', { reviewId }, {
+      delay: delayMs,
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5000 },
+      removeOnComplete: true,
+      jobId: `reveal-review-${reviewId}`
+    });
+  } catch (error) {
+    console.error('Failed to enqueue review visibility', error);
   }
 }

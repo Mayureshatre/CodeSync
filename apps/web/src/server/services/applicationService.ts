@@ -5,6 +5,7 @@ import { ApplyToProjectInput, applyToProjectSchema, UpdateApplicationStatusInput
 import { getAvailableApplicationActions, ApplicationStatus } from '@codesync/shared-types';
 import { createNotification } from './notificationService';
 import { enqueueNotification } from '../jobs/queue';
+import { ensureWorkspace } from './workspaceService';
 
 export async function applyToProject(userId: string, projectId: string, data: ApplyToProjectInput) {
   const parsedData = applyToProjectSchema.parse(data);
@@ -168,6 +169,9 @@ export async function updateApplicationStatus(ownerId: string, applicationId: st
           where: { id: application.projectId },
           data: { teamSizeCurrent: { increment: 1 } },
         });
+
+        // M10: Ensure Workspace exists on member joined
+        await ensureWorkspace(tx, application.projectId, application.userId);
       }
 
       return updatedApp;

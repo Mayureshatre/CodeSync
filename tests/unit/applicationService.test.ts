@@ -33,6 +33,10 @@ vi.mock('../../apps/web/src/server/jobs/queue', () => ({
   enqueueNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('../../apps/web/src/server/services/workspaceService', () => ({
+  ensureWorkspace: vi.fn().mockResolvedValue({ id: 'workspace-1' }),
+}));
+
 import { createNotification } from '../../apps/web/src/server/services/notificationService';
 import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
 

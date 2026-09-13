@@ -237,3 +237,19 @@ export async function getProjectsByOwner(ownerId: string) {
     orderBy: { createdAt: 'desc' }
   });
 }
+
+export async function completeProject(ownerId: string, projectId: string) {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  
+  if (!project) throw new NotFoundError('Project not found');
+  if (project.ownerId !== ownerId) throw new ForbiddenError('You do not have permission to edit this project');
+  // It should be open or in_progress to be marked as completed
+  if (project.status !== 'open' && project.status !== 'in_progress') {
+    throw new ForbiddenError('Project must be open or in progress to be marked as completed');
+  }
+
+  return prisma.project.update({
+    where: { id: projectId },
+    data: { status: 'completed' }
+  });
+}

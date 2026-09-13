@@ -1,6 +1,7 @@
 import { Worker } from 'bullmq';
 import { startNotificationWorker } from './notificationWorker';
 import { startDigestWorker } from './digestWorker';
+import { startReviewWorker } from './reviewWorker';
 import { scheduleWeeklyDigest } from '../../apps/web/src/server/jobs/queue';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
@@ -21,6 +22,7 @@ matchingWorker.on('failed', (job: any, err: any) => {
 // Start the workers
 const notificationWorker = startNotificationWorker(REDIS_URL);
 const digestWorker = startDigestWorker(REDIS_URL);
+const reviewWorker = startReviewWorker(REDIS_URL);
 
 // Schedule the recurring job (safe to call multiple times, BullMQ dedups by pattern)
 scheduleWeeklyDigest().catch(console.error);

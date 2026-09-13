@@ -5,6 +5,7 @@ import { InviteDeveloperInput, inviteDeveloperSchema, RespondToInvitationInput, 
 import { getAvailableInvitationActions, InvitationStatus } from '@codesync/shared-types';
 import { createNotification } from './notificationService';
 import { enqueueNotification } from '../jobs/queue';
+import { ensureWorkspace } from './workspaceService';
 
 export async function inviteDeveloper(ownerId: string, projectId: string, data: InviteDeveloperInput) {
   const parsedData = inviteDeveloperSchema.parse(data);
@@ -142,6 +143,9 @@ export async function respondToInvitation(userId: string, invitationId: string, 
           where: { id: invitation.projectId },
           data: { teamSizeCurrent: { increment: 1 } },
         });
+
+        // M10: Ensure Workspace exists on member joined
+        await ensureWorkspace(tx, invitation.projectId, invitation.invitedUserId);
       }
 
       return updatedInv;
