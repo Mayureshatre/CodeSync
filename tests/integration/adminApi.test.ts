@@ -47,8 +47,7 @@ describe('Admin Reports API Integration', () => {
           targetId: targetUser.id,
           targetType: 'user',
           reason: 'spam',
-          description: 'Integration test report',
-          status: 'pending',
+          status: 'open',
         }
       });
     } catch (e: any) {
