@@ -47,10 +47,13 @@ jobs:
       - name: Prisma Generate
         run: npx prisma generate
 
-      - name: Prisma Migrate & Seed
-        run: |
-          npx prisma migrate deploy
-          npx ts-node prisma/seed-e2e.ts
+      - name: Prisma Migrate
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
+
+      - name: Seed Database
+        run: npx ts-node prisma/seed-e2e.ts
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
 
