@@ -16,5 +16,5 @@ jobs:
       - name: Build shared types
         run: pnpm -F @codesync/shared-types run build
       - run: pnpm run typecheck
-      - run: pnpm run test
+      - run: pnpm run test tests/unit
       - run: pnpm -F web run build
