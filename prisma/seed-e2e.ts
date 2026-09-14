@@ -13,12 +13,15 @@ async function main() {
     create: {
       email: 'admin@example.com',
       passwordHash,
+      authProvider: 'credentials',
       role: 'admin',
       emailVerifiedAt: new Date(),
       profile: {
         create: {
+          username: 'admin',
           displayName: 'Admin User',
           bio: 'System Administrator',
+          experienceLevel: 'expert',
         }
       }
     }
@@ -31,11 +34,14 @@ async function main() {
     create: {
       email: 'e2e1@example.com',
       passwordHash,
+      authProvider: 'credentials',
       emailVerifiedAt: new Date(),
       profile: {
         create: {
+          username: 'e2e1',
           displayName: 'E2E Developer 1',
           bio: 'Test developer',
+          experienceLevel: 'intermediate',
         }
       }
     }
@@ -48,11 +54,14 @@ async function main() {
     create: {
       email: 'e2e2@example.com',
       passwordHash,
+      authProvider: 'credentials',
       emailVerifiedAt: new Date(),
       profile: {
         create: {
+          username: 'e2e2',
           displayName: 'E2E Developer 2',
           bio: 'Test developer 2',
+          experienceLevel: 'intermediate',
         }
       }
     }
@@ -65,11 +74,14 @@ async function main() {
     create: {
       email: 'e2e3@example.com',
       passwordHash,
+      authProvider: 'credentials',
       emailVerifiedAt: new Date(),
       profile: {
         create: {
+          username: 'e2e3',
           displayName: 'E2E Developer 3',
           bio: 'Test developer 3',
+          experienceLevel: 'intermediate',
         }
       }
     }
