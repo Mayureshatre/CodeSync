@@ -57,6 +57,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
 
+      - name: Build shared types
+        run: pnpm -F @codesync/shared-types run build
+
       - name: Typecheck
         run: pnpm typecheck
 
