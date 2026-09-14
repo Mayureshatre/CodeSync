@@ -53,7 +53,7 @@ jobs:
           DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
 
       - name: Seed Database
-        run: npx ts-node prisma/seed-e2e.ts
+        run: npx ts-node -O '{"module":"CommonJS"}' prisma/seed-e2e.ts
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/codesync?schema=public
 
