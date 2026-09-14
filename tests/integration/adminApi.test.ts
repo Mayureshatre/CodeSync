@@ -23,6 +23,7 @@ describe('Admin Reports API Integration', () => {
         create: {
           email: 'integration_admin@example.com',
           passwordHash: 'dummy',
+          authProvider: 'credentials',
           role: 'admin',
           emailVerifiedAt: new Date(),
         }
@@ -34,6 +35,7 @@ describe('Admin Reports API Integration', () => {
         create: {
           email: 'integration_target@example.com',
           passwordHash: 'dummy',
+          authProvider: 'credentials',
           role: 'user',
           emailVerifiedAt: new Date(),
         }
