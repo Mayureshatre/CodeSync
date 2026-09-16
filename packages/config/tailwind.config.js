@@ -17,6 +17,10 @@ module.exports = {
         'text-secondary': 'rgb(var(--text-secondary) / <alpha-value>)',
         'text-muted': 'rgb(var(--text-muted) / <alpha-value>)',
         
+        primary: 'rgb(var(--text-primary) / <alpha-value>)',
+        secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
+        muted: 'rgb(var(--text-muted) / <alpha-value>)',
+        
         border: 'rgb(var(--border) / <alpha-value>)',
         'border-subtle': 'rgb(var(--border) / <alpha-value>)',
         

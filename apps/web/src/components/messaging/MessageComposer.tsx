@@ -20,21 +20,30 @@ export function MessageComposer({ conversationId }: { conversationId: string }) 
   return (
     <form 
       onSubmit={handleSend} 
-      className="p-4 bg-[#181c24] border-t border-[#263042] flex items-center gap-2"
+      className="p-4 sm:p-5 bg-surface border-t border-border flex items-end gap-3 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]"
     >
-      <input
-        type="text"
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder="Type a message..."
-        className="flex-1 bg-[#141822] border border-[#263042] rounded-[8px] px-4 py-2 text-sm text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#06b6d4]"
-        disabled={isPending}
-        maxLength={2000}
-      />
+      <div className="flex-1 bg-background border border-border rounded-2xl shadow-elevation-flat relative focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 transition-all">
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend(e);
+            }
+          }}
+          placeholder="Type a message..."
+          className="w-full bg-transparent px-5 py-3.5 text-sm text-primary placeholder:text-muted focus:outline-none resize-none max-h-32 min-h-[52px]"
+          disabled={isPending}
+          maxLength={2000}
+          rows={1}
+        />
+      </div>
       <button
         type="submit"
         disabled={!body.trim() || isPending}
-        className="p-2 rounded-[8px] bg-[#06b6d4] text-[#0a0e16] disabled:opacity-50 transition-opacity hover:opacity-80"
+        className="p-3.5 rounded-2xl bg-accent text-white shadow-elevation-low disabled:opacity-50 disabled:bg-surface-elevated disabled:text-muted transition-all hover:opacity-90 active:scale-95 flex-shrink-0"
+        title="Send Message"
       >
         <SendIcon className="w-5 h-5" />
       </button>

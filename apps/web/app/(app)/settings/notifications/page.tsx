@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function NotificationSettingsPage() {
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8">
+    <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-[calc(100vh-64px)]">
       <NotificationSettings />
     </div>
   );

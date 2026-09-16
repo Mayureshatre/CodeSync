@@ -79,45 +79,52 @@ export function SkillManager() {
     }
   };
 
-  if (loading) return <Loader2 className="animate-spin text-[#06b6d4] mx-auto my-8" />;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-accent w-8 h-8" /></div>;
 
   return (
-    <div className="max-w-2xl mx-auto bg-[#181c24] p-8 rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_#263042] mt-8">
-      <h2 className="text-xl font-bold text-white mb-4">Your Skills</h2>
+    <div className="w-full max-w-2xl mx-auto bg-surface p-8 sm:p-10 rounded-2xl border border-border shadow-elevation-overlay mt-8">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold tracking-tight text-primary mb-2">Technical Skills</h2>
+        <p className="text-sm text-secondary">Add your skills and proficiency levels to improve your matchmaking accuracy.</p>
+      </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-500 text-sm rounded-[8px]">
+        <div className="mb-6 p-4 bg-error/10 border border-error/20 text-error text-sm rounded-xl">
           {error}
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-3 mb-8">
         {skills.map((us) => (
-          <div key={us.skillId} className="flex items-center bg-[#141822] border border-[#06b6d4] text-[#f1f5f9] px-3 py-1.5 rounded-[8px] text-sm">
-            <span className="w-2 h-2 rounded-full bg-[#06b6d4] mr-2"></span>
-            <span className="font-medium mr-2">{us.skill.name}</span>
-            <span className="text-[#94a3b8] text-xs mr-2 border-l border-[#263042] pl-2">{us.proficiency}</span>
-            <button onClick={() => removeSkill(us.skillId)} className="text-[#94a3b8] hover:text-red-400">
+          <div key={us.skillId} className="flex items-center bg-background border border-border text-primary px-3 py-1.5 rounded-xl text-sm shadow-elevation-low transition-all duration-200 hover:shadow-elevation-flat">
+            <span className="w-2 h-2 rounded-full bg-accent mr-2.5"></span>
+            <span className="font-medium mr-3">{us.skill.name}</span>
+            <span className="text-secondary font-mono text-[10px] uppercase tracking-wider mr-3 border-l border-border pl-3">{us.proficiency}</span>
+            <button onClick={() => removeSkill(us.skillId)} className="text-muted hover:text-error transition-colors p-0.5 rounded-full hover:bg-error/10">
               <X className="w-4 h-4" />
             </button>
           </div>
         ))}
-        {skills.length === 0 && <p className="text-[#64748b] text-sm">No skills added yet.</p>}
+        {skills.length === 0 && (
+          <div className="w-full py-8 text-center border-2 border-dashed border-border rounded-xl">
+            <p className="text-muted text-sm">No skills added yet.</p>
+          </div>
+        )}
       </div>
 
-      <div className="border-t border-[#263042] pt-6">
-        <h3 className="text-sm font-medium text-[#f1f5f9] mb-3">Add a Skill</h3>
+      <div className="border-t border-border pt-8">
+        <h3 className="text-sm font-medium text-primary mb-4">Add a new skill</h3>
         
-        <div className="relative mb-4">
+        <div className="relative mb-5">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search skills (e.g. React, Python)"
-            className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4]"
+            placeholder="Search skills (e.g. React, Python, AWS)"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
           {searchResults.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-[#181c24] border border-[#263042] rounded-[8px] shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-10 w-full mt-2 bg-surface border border-border rounded-xl shadow-elevation-overlay max-h-56 overflow-y-auto">
               {searchResults.map(skill => (
                 <button
                   key={skill.id}
@@ -126,7 +133,7 @@ export function SkillManager() {
                     setSearchQuery(skill.name);
                     setSearchResults([]);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#f1f5f9] hover:bg-[#1e2433] transition-colors"
+                  className="w-full text-left px-4 py-2.5 text-sm text-primary hover:bg-surface-elevated transition-colors first:rounded-t-xl last:rounded-b-xl"
                 >
                   {skill.name}
                 </button>
@@ -135,13 +142,13 @@ export function SkillManager() {
           )}
         </div>
 
-        <form onSubmit={handleSubmit(onAddSkill)} className="flex items-end gap-4">
+        <form onSubmit={handleSubmit(onAddSkill)} className="flex flex-col sm:flex-row items-end gap-4">
           <input type="hidden" {...register('skillId')} />
-          <div className="flex-1">
-            <label className="block text-xs text-[#94a3b8] mb-1">Proficiency</label>
+          <div className="flex-1 w-full">
+            <label className="block text-xs font-medium text-secondary mb-1.5">Proficiency Level</label>
             <select
               {...register('proficiency')}
-              className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4]"
+              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
             >
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
@@ -151,9 +158,9 @@ export function SkillManager() {
           </div>
           <button
             type="submit"
-            className="bg-transparent border border-[#263042] hover:bg-[#1e2433] hover:border-[#334155] text-[#f1f5f9] font-medium py-2 px-4 rounded-[8px] flex items-center transition-colors h-[38px]"
+            className="w-full sm:w-auto bg-surface-elevated border border-border hover:border-accent hover:text-accent text-primary font-medium py-2.5 px-6 rounded-xl flex items-center justify-center transition-all duration-200 shadow-elevation-low min-h-[44px]"
           >
-            <Plus className="w-4 h-4 mr-2" /> Add
+            <Plus className="w-4 h-4 mr-2" /> Add Skill
           </button>
         </form>
       </div>

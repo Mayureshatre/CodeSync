@@ -1,182 +1,159 @@
-# CodeSync — Final Design & Motion Specification
+# CodeSync Design & Interaction Specification
 
-**Tagline:** _“Where developers find their missing piece.”_  
-**Visual Identity:** _Syntactic Velocity (Refined)_ — Sophisticated dark-first developer matchmaking & collaboration platform.
+## 1. Product Visual Identity
+CodeSync is a **premium, modern developer collaboration platform**.
 
----
+**The desired feeling:** Premium, modern, sophisticated, clean, trustworthy, approachable, and alive.
 
-## 1. Design System & Token Foundation
+**It should NOT feel:** Cyberpunk, hacker-themed, terminal-like, excessively neon, visually noisy, or like a developer IDE/tool.
 
-### 1.1 Color Tokens
+**Core Identity Principle:**
+> "CodeSync is a premium modern platform built for developers, not a developer-themed website."
 
-CodeSync uses a disciplined, dark-first graphite foundation where Cyan acts as an intentional brand marker and primary action anchor, rather than ambient neon decoration.
+## 2. Design Foundation: Premium Minimal
+The foundation of CodeSync is **Premium Minimal**. Before any decorative effects are applied, the interface must be visually strong, clear, and highly functional.
+- Generous but controlled whitespace
+- Clean, spacious layouts
+- Strong typography hierarchy
+- Mostly neutral surfaces
+- Subtle borders and refined shadows
+- Restrained decoration and minimal visual noise
+- Clear information hierarchy
+- Accessible contrast
 
-### 1.2 Typography System
+The interface must remain visually strong even if all Aurora effects are removed.
 
-- **Primary typeface:** Plus Jakarta Sans
-  - Clean, geometric, contemporary sans-serif.
-- **Technical typeface:** JetBrains Mono or Fira Code
-  - Used strictly for:
-    - Code tokens
-    - Syntax snippets
-    - Match percentages
-    - Telemetry metadata
+## 3. Modern Aurora Personality
+The **Modern Aurora** aesthetic provides CodeSync's personality. Aurora is an accent layer, NOT the foundation.
+- Subtle blue/purple atmospheric and mesh/radial gradients
+- Soft color transitions and layered depth
+- Selective use around important areas (e.g., active states, hero backgrounds)
+- Restrained glow
 
-Normal UI copy must use the primary sans-serif typeface.
+**Explicitly Prohibited:**
+- Gradients everywhere
+- Heavy neon glow or excessive saturation
+- Decorative effects without purpose
 
-### 1.3 Spacing Scale & Layout Grid
+## 4. Light + Dark Mode
+Both light mode and dark mode are equally important, first-class experiences. Neither mode is simply an inversion of the other. The final implementation must support explicit light mode, explicit dark mode, and system preference with a smooth but lightweight theme transition. Do not prescribe a specific theme library yet.
 
-Built on a 4px modular base grid (`rem` equivalents).
+**Semantic Tokens:**
+- `background`: Page background
+- `surface`: Standard card/container background
+- `surface-elevated`: Floating elements (modals, dropdowns)
+- `text-primary`: Headings and primary body copy
+- `text-secondary`: Supporting text
+- `text-muted`: Disabled or placeholder text
+- `border`: Subtle delineations
+- `accent-primary`: Primary actions and branding
+- `accent-secondary`: Supporting branded elements
+- `success`: Positive states
+- `warning`: Caution states
+- `error`: Destructive states
+- `aurora-1`, `aurora-2`, `aurora-3`: Gradient mesh colors
 
-| Token      | Size | Usage                                                                 |
-| ---------- | ---: | --------------------------------------------------------------------- |
-| `space-1`  |  4px | Micro gaps, icon-to-label spacing inside small pills                  |
-| `space-2`  |  8px | Stack chip padding, small button gaps, segmented control padding      |
-| `space-3`  | 12px | Standard inner card padding, input internal vertical padding          |
-| `space-4`  | 16px | Default component padding, standard mobile gutters, card body spacing |
-| `space-5`  | 20px | Section inner padding, bottom sheet headers                           |
-| `space-6`  | 24px | Card-to-card vertical rhythm, form field separation                   |
-| `space-8`  | 32px | Major layout section gaps, onboarding step spacing                    |
-| `space-12` | 48px | Page section dividers, hero margins                                   |
+## 5. Color System (Arctic Aurora)
+The primary palette uses a neutral foundation with indigo/blue primary accents, purple secondary accents, subtle cyan/sky support, and restrained green for positive states. 
 
----
+*Note: Implementation values may be adjusted during visual validation for accessibility and contrast.*
 
-## 1.4 Border Radius & Shadows
+**Light Mode Semantic Target:**
+- Background: `#FAFAFA`
+- Surface: `#FFFFFF`
+- Text Primary: `#111827`
+- Text Secondary: `#6B7280`
+- Border: `#E5E7EB`
+- Accent Primary: `#4F46E5` (Indigo)
+- Aurora Colors: Indigo, Purple, Sky
 
-### Border Radius
+**Dark Mode Semantic Target:**
+- Background: `#09090B`
+- Surface: `#18181B`
+- Text Primary: `#F9FAFB`
+- Text Secondary: `#A1A1AA`
+- Border: `#27272A`
+- Accent Primary: `#6366F1` (Soft Indigo)
+- Aurora Colors: Soft Indigo, Amethyst, Sky
 
-| Token         |   Size | Usage                                                  |
-| ------------- | -----: | ------------------------------------------------------ |
-| `radius-sm`   |    6px | Small badges, code pills, mini checkboxes              |
-| `radius-md`   |    8px | Form inputs, default buttons, tech stack chips         |
-| `radius-lg`   |   12px | Opportunity cards, profile summary containers, dialogs |
-| `radius-xl`   |   16px | Modal sheets, floating bottom navigation, hero banners |
-| `radius-full` | 9999px | Avatars, pill badges, toggle switches                  |
+## 6. Typography
+**Primary Direction: Geist + Geist Mono**
 
-### Shadows & Elevation
+**Geist (Primary UI Font):**
+Used for headings, navigation, primary UI elements, normal body content, and buttons. 
 
-Atmospheric and subtle. Avoid heavy glow blooms.
+**Geist Mono (Technical Font):**
+Used strictly for match percentages, technical metadata, technology identifiers (e.g., skill tags), code-related information, and system/telemetry-style secondary information.
+*Do NOT use monospace typography for normal body content.*
 
-- **`elevation-flat`**
-  - `0 0 0 1px #263042`
-  - Crisp 1px border; default for cards.
+Typography utilizes a strong hierarchy with heavily contrasted weights for headings vs. body text.
 
-- **`elevation-low`**
-  - `0 2px 8px rgba(0, 0, 0, 0.45), 0 0 0 1px #263042`
-  - Hovered cards.
+## 7. Component Visual Language
+Components must remain clean, restrained, premium, and consistent between light/dark modes.
+- **Buttons:** Subtle gradient accents for primary, clear borders for secondary. Soft rounded radii (e.g., 8px-12px).
+- **Cards:** Glassy or subtle off-background color. Low elevation shadows. Subtle hover borders.
+- **Inputs:** Clean 1px borders, subtle focus rings (using primary accent), transparent backgrounds.
+- **Selectors:** Modern pill-based segmented controls.
+- **Navigation & Bottom Navigation:** Glassmorphic (blur backdrop) to allow subtle aurora gradients to peek through upon scroll.
+- **Badges & Skill Chips:** Soft backgrounds (e.g., accent color at 10-15% opacity) with matching text.
+- **Match Indicators:** Minimal rings or progress bars with smooth gradients, utilizing Geist Mono for percentages.
+- **Avatars:** Simple, circular, with a 1px inner ring to separate them from the background.
+- **Modals & Toasts:** Elevated surfaces (`surface-elevated`) with distinct but soft drop shadows (`elevation-overlay`).
+- **Loading/Empty/Error States:** Elegant, minimalist illustrations or subtle pulsing skeleton loaders. Error states use restrained, accessible reds.
 
-- **`elevation-overlay`**
-  - `0 12px 32px rgba(0, 0, 0, 0.65), 0 0 0 1px #263042`
-  - Modals and dropdowns.
+## 8. Interaction Design
+The website should feel alive without becoming distracting.
+> "Alive when interacted with, calm when idle."
 
-- **`focus-glow`**
-  - `0 0 0 2px #06b6d4, 0 0 12px rgba(6, 182, 212, 0.2)`
-  - Keyboard accessibility focus state.
+- **Cursor-reactive network:** Subtle developer/project nodes that respond gently to cursor movement. Connections represent compatibility, reinforcing the matching concept.
+- **Card interaction:** Subtle hover lift (translate Y), slight transform, refined shadow/depth change. No exaggerated 3D effects.
+- **Button interaction:** Subtle hover transition (e.g., brightness/opacity shift), slight press scale (e.g., 0.98), responsive feedback.
+- **Aurora movement:** Slow, subtle atmospheric movement. Never distracting. CSS-first where practical.
+- **Scroll reveals:** Subtle opacity/transform transitions, staggered only where useful.
 
----
+## 9. Performance Requirements
+Performance is a hard design requirement.
+> "Premium, not heavy."
 
-# 2. Component Specifications
+**Prefer:**
+- CSS transitions and transforms
+- Opacity changes
+- Lightweight JavaScript
+- GPU-friendly transforms
+- Lazy-loaded interactive effects
+- `requestAnimationFrame` only when genuinely necessary
 
-## 2.1 Buttons
+**Avoid:**
+- WebGL (unless explicitly justified later)
+- Heavy canvas scenes or video backgrounds
+- Unnecessary animation libraries
+- Continuously expensive animations
+- Layout-triggering animations
 
-### Primary CTA
+**Accessibility in Performance:**
+Require reduced-motion support, mobile fallbacks, static fallbacks, and execute interaction only when appropriate/visible.
 
-- Background: `#06b6d4`
-- Text: `#0a0e16`
-- Font weight: 700
-- Hover: `#0891b2`
-- Active: `#0e7490`
-- Padding: `12px 20px`
-- Minimum height: `44px`
-- Icon:
-  - Trailing arrow or leading context glyph
-  - 8px margin from text
+## 10. Responsive Design
+Design is mobile-first and must work across mobile, tablet, and desktop viewports. Do not design around fixed screenshot dimensions. Interactive effects must degrade gracefully on touch devices (e.g., replacing hover states with active states or static reveals).
 
-### Secondary / Outline
+## 11. Accessibility
+Visual effects must never interfere with usability.
+- WCAG-conscious contrast ratios
+- Visible focus states for keyboard navigation
+- Semantic HTML
+- Accessible labels and ARIA attributes where needed
+- Generous touch target sizing (minimum 44x44px for mobile targets)
+- Respect for `prefers-reduced-motion`
 
-- Background: transparent
-- Border: `1px solid #263042`
-- Text: `#f1f5f9`
-- Hover:
-  - Background: `#1e2433`
-  - Border: `#334155`
+## 12. Design Philosophy
+1. Premium over flashy.
+2. Clarity over decoration.
+3. Interaction with purpose.
+4. Light and dark are equally important.
+5. Aurora is an accent, not the entire design.
+6. Technical details should feel technical without making the entire UI look like a terminal.
+7. Performance is part of the design.
+8. The interface should communicate the idea of developers finding complementary people and projects.
 
-### Tertiary / Ghost
-
-- Background: transparent
-- Text: `#94a3b8`
-- Hover:
-  - Text: `#f1f5f9`
-  - Background: `rgba(255,255,255,0.04)`
-
-### Destructive
-
-- Background: `rgba(239, 68, 68, 0.1)`
-- Border: `1px solid rgba(239, 68, 68, 0.3)`
-- Text: `#ef4444`
-
----
-
-## 2.2 Form Inputs & Controls
-
-### Text Inputs & Password Fields
-
-- Background: `#141822`
-- Border: `1px solid #263042`
-- Typography: 14px Plus Jakarta Sans
-- Placeholder: `#64748b`
-- Leading icon:
-  - 20px
-  - `#64748b`
-- Trailing state icon:
-  - Checkmark
-  - Show/hide password toggle
-  - Other contextual states
-
-### Segmented Controls — Proficiency Matrix
-
-- Container:
-  - Background: `#0f131c`
-  - Border: `1px solid #263042`
-  - Radius: 8px
-- Option buttons:
-  - Equal flex width
-  - 12px font size
-- Active:
-  - `#06b6d4`
-  - Or `#10b981` for top tier
-  - Text: `#0a0e16`
-  - Font weight: bold
-- Inactive:
-  - Transparent
-  - Text: `#94a3b8`
-  - Hover: `#181c24`
-
-### Skill Tags & Selection Chips
-
-#### Inactive / Suggestion
-
-- Background: `#181c24`
-- Border: `1px solid #263042`
-- Text: `#94a3b8`
-- Prefix: `+`
-
-#### Selected / Active
-
-- Background: `#141822`
-- Border: `1px solid #06b6d4`
-- Text: `#f1f5f9`
-- Cyan bullet indicator
-- Trailing `×` dismiss button
-
----
-
-# 2.3 Cards & Containers
-
-## Curated Match Opportunity Card
-
-Background:
-
-```text
-#181c24
-```
+## 13. Stitch Reference Notice
+*Important:* The previously supplied Stitch screenshots (featuring the "Dark Graphite + Cyan + Developer Terminal" aesthetic) are historical visual references. The NEW Premium Minimal + Modern Aurora direction documented in this file entirely supersedes the old Stitch visual treatment. Outdated Graphite/Cyan/terminal-specific rules are officially deprecated.

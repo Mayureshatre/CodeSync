@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { useConversations, Conversation } from '../../hooks/useMessaging';
-import { Loader2Icon, MessageSquareIcon } from 'lucide-react';
 import Image from 'next/image';
+import { useConversations } from '../../hooks/useMessaging';
+import { MessageSquareIcon } from 'lucide-react';
 
 interface ConversationListProps {
   activeId?: string;
@@ -16,31 +16,33 @@ export function ConversationList({ activeId, onSelect, currentUserId }: Conversa
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8 border-r border-[#263042] h-full">
-        <Loader2Icon className="w-6 h-6 text-[#06b6d4] animate-spin" />
+      <div className="p-8 text-center text-secondary animate-pulse flex flex-col items-center justify-center h-full">
+        Loading...
       </div>
     );
   }
 
   if (isError || !conversations) {
     return (
-      <div className="p-4 text-center text-red-500 border-r border-[#263042] h-full">
-        Failed to load conversations
+      <div className="p-6 text-center text-error border-r border-border h-full flex items-center justify-center bg-error/5">
+        <p className="font-medium">Failed to load conversations</p>
       </div>
     );
   }
 
   if (conversations.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-[#94a3b8] h-full border-r border-[#263042]">
-        <MessageSquareIcon className="w-12 h-12 mb-4 opacity-50" />
-        <p className="text-center text-sm">No conversations yet.</p>
+      <div className="flex flex-col items-center justify-center p-8 text-secondary h-full border-r border-border">
+        <div className="w-16 h-16 rounded-2xl bg-surface-elevated border border-border shadow-elevation-low flex items-center justify-center mb-6">
+          <MessageSquareIcon className="w-8 h-8 text-muted" />
+        </div>
+        <p className="text-center text-sm font-medium">No conversations yet.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full border-r border-[#263042] overflow-y-auto bg-[#181c24]">
+    <div className="w-full h-full border-r border-border overflow-y-auto bg-surface">
       {conversations.map((conv) => {
         const otherParticipant = conv.participants.find(p => p.userId !== currentUserId)?.user;
         const displayName = conv.type === 'project' ? `Project Chat` : (otherParticipant?.name || 'Unknown User');
@@ -56,39 +58,43 @@ export function ConversationList({ activeId, onSelect, currentUserId }: Conversa
           <button
             key={conv.id}
             onClick={() => onSelect(conv.id)}
-            className={`w-full text-left p-4 border-b border-[#263042] transition-colors flex items-start gap-3 hover:bg-[#1e2433] ${
-              activeId === conv.id ? 'bg-[#1e2433] border-l-2 border-l-[#06b6d4]' : ''
+            className={`w-full text-left p-4 sm:p-5 border-b border-border transition-all flex items-center gap-4 hover:bg-surface-elevated/70 group ${
+              activeId === conv.id ? 'bg-surface-elevated border-l-2 border-l-accent' : 'border-l-2 border-l-transparent'
             }`}
           >
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#263042] overflow-hidden flex items-center justify-center text-[#94a3b8]">
+            <div className={`flex-shrink-0 w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-primary font-bold text-lg shadow-elevation-low ${
+              activeId === conv.id ? 'bg-background border border-accent/20' : 'bg-background border border-border'
+            }`}>
               {otherParticipant?.image ? (
-                <Image src={otherParticipant.image} alt={displayName} width={40} height={40} className="object-cover" />
+                <Image src={otherParticipant.image} alt={displayName} width={48} height={48} className="object-cover" />
               ) : (
-                <span className="text-lg font-bold">{displayName.charAt(0)}</span>
+                <span>{displayName.charAt(0)}</span>
               )}
             </div>
             
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-baseline mb-1">
-                <h3 className={`text-sm truncate ${isUnread ? 'text-white font-bold' : 'text-[#f1f5f9] font-medium'}`}>
+                <h3 className={`text-sm truncate transition-colors ${
+                  isUnread ? 'text-primary font-bold' : activeId === conv.id ? 'text-accent font-semibold' : 'text-primary font-medium group-hover:text-accent'
+                }`}>
                   {displayName}
                 </h3>
                 {latestMessage && (
-                  <span className="text-xs text-[#64748b] whitespace-nowrap ml-2">
-                    {new Date(latestMessage.createdAt).toLocaleDateString()}
+                  <span className="text-[11px] font-mono tracking-wider text-muted whitespace-nowrap ml-2">
+                    {new Date(latestMessage.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                 )}
               </div>
               
               {latestMessage && (
-                <p className={`text-xs truncate ${isUnread ? 'text-[#06b6d4]' : 'text-[#94a3b8]'}`}>
+                <p className={`text-xs truncate transition-colors ${isUnread ? 'text-primary font-medium' : 'text-secondary'}`}>
                   {latestMessage.body}
                 </p>
               )}
             </div>
             
             {isUnread && (
-              <div className="w-2 h-2 rounded-full bg-[#06b6d4] mt-2 flex-shrink-0" />
+              <div className="w-2.5 h-2.5 rounded-full bg-accent mt-0.5 flex-shrink-0 shadow-[0_0_8px_rgba(6,182,212,0.5)]" />
             )}
           </button>
         );

@@ -1,7 +1,8 @@
-
 'use client';
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2Icon, LightbulbIcon, CheckIcon, XIcon, GitMergeIcon } from 'lucide-react';
 
 export default function SkillsPage() {
   const queryClient = useQueryClient();
@@ -35,50 +36,89 @@ export default function SkillsPage() {
     }
   });
 
-  if (isLoading) return <div className="p-4">Loading skills...</div>;
-  if (error) return <div className="p-4 text-red-600">Error loading skills</div>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Loader2Icon className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm font-medium">
+        Error loading skills
+      </div>
+    );
+  }
 
   const skills = data?.data || [];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Pending Skills</h1>
-      {resolveMutation.error && <div className="bg-red-50 text-red-600 p-3 rounded">{(resolveMutation.error as Error).message}</div>}
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">Pending Skills</h1>
+        <p className="text-secondary mt-2">Approve, reject, or merge user-submitted skills.</p>
+      </div>
+
+      {resolveMutation.error && (
+        <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm font-medium">
+          {(resolveMutation.error as Error).message}
+        </div>
+      )}
       
       {skills.length === 0 ? (
-        <div className="bg-white p-6 rounded shadow text-gray-500 text-center">No pending skills.</div>
+        <div className="bg-surface border border-border shadow-elevation-flat rounded-2xl p-16 text-center text-secondary flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mb-4">
+            <LightbulbIcon className="w-8 h-8 text-muted" />
+          </div>
+          <p className="text-lg font-medium text-primary mb-1">Queue is empty</p>
+          <p className="text-sm">There are no pending skills at this time.</p>
+        </div>
       ) : (
         <div className="grid gap-4">
           {skills.map((s: any) => (
-            <div key={s.id} className="bg-white p-4 rounded shadow flex items-center justify-between">
+            <div key={s.id} className="bg-surface border border-border p-5 rounded-2xl shadow-elevation-flat flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-all hover:border-border/80 hover:shadow-elevation-overlay">
               <div>
-                <span className="font-medium text-lg">{s.name}</span>
-                <span className="text-sm text-gray-500 ml-2">ID: {s.id}</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-lg text-primary">{s.name}</span>
+                  <span className="px-2 py-0.5 rounded bg-surface-elevated text-xs font-mono text-muted border border-border">ID: {s.id}</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
+              
+              <div className="flex flex-wrap items-center gap-3 lg:gap-4">
                 <button 
                   onClick={() => resolveMutation.mutate({ id: s.id, action: 'approve' })}
                   disabled={resolveMutation.isPending}
-                  className="px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded text-sm"
-                >Approve</button>
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/10 text-success border border-success/20 hover:bg-success/20 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  <CheckIcon className="w-4 h-4" />
+                  Approve
+                </button>
                 <button 
                   onClick={() => resolveMutation.mutate({ id: s.id, action: 'reject' })}
                   disabled={resolveMutation.isPending}
-                  className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-sm"
-                >Reject</button>
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-error/10 text-error border border-error/20 hover:bg-error/20 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  <XIcon className="w-4 h-4" />
+                  Reject
+                </button>
                 
-                <div className="flex items-center space-x-2 ml-4 border-l pl-4">
+                <div className="flex items-center gap-2 pl-4 border-l border-border">
                   <input 
                     type="text" 
-                    placeholder="Target Skill ID" 
-                    className="border p-1 text-sm rounded w-32"
+                    placeholder="Target ID" 
+                    className="w-32 bg-background border border-border rounded-lg px-3 py-1.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-elevation-flat"
                     onChange={(e) => setTargetId(e.target.value)}
                   />
                   <button 
                     onClick={() => resolveMutation.mutate({ id: s.id, action: 'merge', targetSkillId: targetId })}
                     disabled={!targetId || resolveMutation.isPending}
-                    className="px-3 py-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded text-sm disabled:opacity-50"
-                  >Merge</button>
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-elevated text-primary border border-border hover:border-accent hover:text-accent rounded-lg text-sm font-medium transition-all disabled:opacity-50 shadow-elevation-low"
+                  >
+                    <GitMergeIcon className="w-4 h-4" />
+                    Merge
+                  </button>
                 </div>
               </div>
             </div>

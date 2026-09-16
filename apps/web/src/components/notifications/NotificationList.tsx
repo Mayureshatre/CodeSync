@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead, NotificationItem } from '../../hooks/useNotifications';
-import { CheckIcon, CheckCheckIcon, BellIcon, Loader2Icon } from 'lucide-react';
+import { BellIcon, CheckIcon, CheckCheckIcon, Loader2Icon } from 'lucide-react';
 
 function getNotificationLink(notification: NotificationItem): string {
   const { type, payload } = notification;
@@ -44,16 +44,17 @@ export function NotificationList() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2Icon className="w-8 h-8 text-[#06b6d4] animate-spin" />
+      <div className="flex flex-col items-center justify-center p-12 space-y-4">
+        <Loader2Icon className="w-8 h-8 text-accent animate-spin" />
+        <p className="text-secondary font-medium">Loading notifications...</p>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="p-8 text-center text-red-500">
-        Failed to load notifications. Please try again.
+      <div className="p-8 text-center bg-error/10 border border-error/20 text-error rounded-2xl max-w-2xl mx-auto">
+        <p className="font-medium">Failed to load notifications. Please try again.</p>
       </div>
     );
   }
@@ -63,29 +64,33 @@ export function NotificationList() {
 
   if (allNotifications.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-[#94a3b8] bg-[#181c24] rounded-[12px] border border-[#263042]">
-        <BellIcon className="w-12 h-12 mb-4 opacity-50" />
+      <div className="flex flex-col items-center justify-center p-16 max-w-3xl mx-auto text-secondary border-2 border-dashed border-border rounded-2xl">
+        <div className="w-16 h-16 rounded-2xl bg-surface-elevated border border-border shadow-elevation-low flex items-center justify-center mb-6">
+          <BellIcon className="w-8 h-8 text-muted" />
+        </div>
         <p className="text-lg">You have no notifications</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          Notifications
-          {unreadCount > 0 && (
-            <span className="bg-[#06b6d4] text-white text-xs px-2 py-1 rounded-full font-bold">
-              {unreadCount} new
-            </span>
-          )}
-        </h1>
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-primary flex items-center gap-3">
+            Notifications
+            {unreadCount > 0 && (
+              <span className="text-sm px-2.5 py-1 bg-accent/10 text-accent font-semibold rounded-lg border border-accent/20">
+                {unreadCount} new
+              </span>
+            )}
+          </h1>
+        </div>
         {unreadCount > 0 && (
           <button
             onClick={() => markAllRead()}
             disabled={isMarkingAll}
-            className="flex items-center gap-2 text-sm text-[#94a3b8] hover:text-white transition-colors"
+            className="flex items-center justify-center sm:justify-start gap-2 px-4 py-2 text-sm font-medium bg-surface-elevated text-secondary hover:text-accent hover:border-accent transition-all border border-border rounded-xl shadow-elevation-low disabled:opacity-50"
           >
             <CheckCheckIcon className="w-4 h-4" />
             Mark all as read
@@ -102,10 +107,10 @@ export function NotificationList() {
           return (
             <div
               key={notification.id}
-              className={`p-4 rounded-[12px] border transition-colors ${
+              className={`p-5 rounded-2xl border transition-all ${
                 isUnread 
-                  ? 'bg-[#1e2433] border-[#06b6d4]/50' 
-                  : 'bg-[#181c24] border-[#263042] opacity-75'
+                  ? 'bg-surface shadow-elevation-flat border-border/80 hover:border-accent/40 hover:shadow-elevation-overlay' 
+                  : 'bg-background border-border/50 opacity-80 hover:opacity-100 hover:border-border'
               }`}
             >
               <div className="flex justify-between items-start gap-4">
@@ -114,20 +119,22 @@ export function NotificationList() {
                   onClick={() => {
                     if (isUnread) markRead(notification.id);
                   }}
-                  className="flex-1 block hover:opacity-80 transition-opacity"
+                  className="flex-1 block group"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1.5 flex-shrink-0">
                       {isUnread ? (
-                        <div className="w-2 h-2 rounded-full bg-[#06b6d4]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-accent shadow-[0_0_8px_rgba(6,182,212,0.4)]" />
                       ) : (
-                        <div className="w-2 h-2 rounded-full bg-transparent" />
+                        <div className="w-2.5 h-2.5 rounded-full border-2 border-muted" />
                       )}
                     </div>
                     <div>
-                      <p className="text-white text-sm font-medium mb-1">{message}</p>
-                      <p className="text-[#94a3b8] text-xs">
-                        {new Date(notification.createdAt).toLocaleDateString()} at {new Date(notification.createdAt).toLocaleTimeString()}
+                      <p className={`text-sm mb-1.5 transition-colors ${isUnread ? 'text-primary font-semibold group-hover:text-accent' : 'text-primary font-medium'}`}>
+                        {message}
+                      </p>
+                      <p className="text-muted text-xs font-mono tracking-wide">
+                        {new Date(notification.createdAt).toLocaleDateString()} • {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>
@@ -136,7 +143,7 @@ export function NotificationList() {
                 {isUnread && (
                   <button
                     onClick={() => markRead(notification.id)}
-                    className="p-2 text-[#94a3b8] hover:text-[#06b6d4] transition-colors rounded-full hover:bg-[#263042]"
+                    className="p-2.5 text-muted hover:text-accent hover:bg-accent/10 transition-all rounded-xl border border-transparent hover:border-accent/20 flex-shrink-0"
                     title="Mark as read"
                   >
                     <CheckIcon className="w-4 h-4" />
@@ -149,12 +156,13 @@ export function NotificationList() {
       </div>
 
       {hasNextPage && (
-        <div className="mt-8 text-center">
+        <div className="mt-10 text-center">
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="px-6 py-2 bg-[#1e2433] hover:bg-[#263042] text-white rounded-[8px] transition-colors border border-[#263042] disabled:opacity-50"
+            className="px-6 py-2.5 bg-surface-elevated hover:bg-surface text-primary font-medium rounded-xl transition-all border border-border hover:border-accent hover:text-accent shadow-elevation-low disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
           >
+            {isFetchingNextPage ? <Loader2Icon className="w-4 h-4 animate-spin" /> : null}
             {isFetchingNextPage ? 'Loading more...' : 'Load older notifications'}
           </button>
         </div>

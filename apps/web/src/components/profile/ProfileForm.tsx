@@ -67,62 +67,69 @@ export function ProfileForm() {
     }
   };
 
-  if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-[#06b6d4]" /></div>;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-accent w-8 h-8" /></div>;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto bg-[#181c24] p-8 rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_#263042]">
-      <h2 className="text-xl font-bold text-white mb-4">Basic Information</h2>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-2xl mx-auto bg-surface p-8 sm:p-10 rounded-2xl border border-border shadow-elevation-overlay">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-primary mb-2">Developer Profile</h2>
+        <p className="text-sm text-secondary">Complete your profile to find your missing piece.</p>
+      </div>
       
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-500 text-sm rounded-[8px]">
+        <div className="p-4 bg-error/10 border border-error/20 text-error text-sm rounded-xl">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm font-medium text-[#f1f5f9] mb-1">Display Name</label>
+          <label className="block text-sm font-medium text-primary mb-1.5">Display Name</label>
           <input
             {...register('displayName')}
-            className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4]"
+            placeholder="Jane Doe"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
-          {errors.displayName && <p className="mt-1 text-sm text-red-500">{errors.displayName.message}</p>}
+          {errors.displayName && <p className="mt-1.5 text-sm text-error">{errors.displayName.message}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[#f1f5f9] mb-1">Username</label>
+          <label className="block text-sm font-medium text-primary mb-1.5">Username</label>
           <input
             {...register('username')}
-            className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4]"
+            placeholder="janedoe"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
-          {errors.username && <p className="mt-1 text-sm text-red-500">{errors.username.message}</p>}
+          {errors.username && <p className="mt-1.5 text-sm text-error">{errors.username.message}</p>}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#f1f5f9] mb-1">Bio</label>
+        <label className="block text-sm font-medium text-primary mb-1.5">Bio</label>
         <textarea
           {...register('bio')}
-          rows={3}
-          className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4]"
+          rows={4}
+          placeholder="I build things for the web..."
+          className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200 resize-none"
         />
-        {errors.bio && <p className="mt-1 text-sm text-red-500">{errors.bio.message}</p>}
+        {errors.bio && <p className="mt-1.5 text-sm text-error">{errors.bio.message}</p>}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm font-medium text-[#f1f5f9] mb-1">Location</label>
+          <label className="block text-sm font-medium text-primary mb-1.5">Location</label>
           <input
             {...register('location')}
-            className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4]"
+            placeholder="San Francisco, CA"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[#f1f5f9] mb-1">Availability</label>
+          <label className="block text-sm font-medium text-primary mb-1.5">Availability</label>
           <select
             {...register('availability')}
-            className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4]"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           >
             <option value="available">Available</option>
             <option value="open_to_projects">Open to Projects</option>
@@ -133,10 +140,10 @@ export function ProfileForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#f1f5f9] mb-1">Experience Level</label>
+        <label className="block text-sm font-medium text-primary mb-1.5">Experience Level</label>
         <select
           {...register('experienceLevel')}
-          className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4]"
+          className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
         >
           <option value="beginner">Beginner</option>
           <option value="intermediate">Intermediate</option>
@@ -145,29 +152,31 @@ export function ProfileForm() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm font-medium text-[#f1f5f9] mb-1">GitHub URL</label>
+          <label className="block text-sm font-medium text-primary mb-1.5">GitHub URL</label>
           <input
             {...register('githubUrl')}
-            className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b]"
+            placeholder="https://github.com/janedoe"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
-          {errors.githubUrl && <p className="mt-1 text-sm text-red-500">{errors.githubUrl.message}</p>}
+          {errors.githubUrl && <p className="mt-1.5 text-sm text-error">{errors.githubUrl.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#f1f5f9] mb-1">LinkedIn URL</label>
+          <label className="block text-sm font-medium text-primary mb-1.5">LinkedIn URL</label>
           <input
             {...register('linkedinUrl')}
-            className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b]"
+            placeholder="https://linkedin.com/in/janedoe"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
         </div>
       </div>
 
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-6 border-t border-border">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-[#06b6d4] hover:bg-[#0891b2] text-[#0a0e16] font-bold py-2 px-6 rounded-[8px] flex items-center transition-colors disabled:opacity-50"
+          className="bg-accent hover:opacity-90 active:scale-[0.98] text-white font-medium py-2.5 px-6 rounded-xl flex items-center transition-all duration-200 disabled:opacity-50 disabled:active:scale-100 shadow-elevation-low"
         >
           {isSubmitting ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : null}
           Save Profile

@@ -18,7 +18,7 @@ export default async function MyProfilePage() {
   }
 
   return (
-    <div className="py-10 px-4 sm:px-6 lg:px-8 bg-[#0B0D10] min-h-screen">
+    <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
       <ProfileView profile={profile} isOwner={true} />
     </div>
   );

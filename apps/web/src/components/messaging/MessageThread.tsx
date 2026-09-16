@@ -18,10 +18,6 @@ export function MessageThread({ conversationId, currentUserId }: MessageThreadPr
   const pages = data?.pages || [];
   
   // The pages are ordered such that page 0 has the newest messages, page 1 has older, etc.
-  // But inside each page, messages are chronological (older first, newer last),
-  // OR the array is sorted. Our backend returns `messages.reverse()` meaning older first.
-  // We want to render older messages at the top, newer at the bottom.
-  // So we should map pages from last to first.
   const flatMessages = [...pages].reverse().flatMap(p => p.items);
 
   // Poll for new messages using the ID of the absolute newest REAL message
@@ -29,9 +25,6 @@ export function MessageThread({ conversationId, currentUserId }: MessageThreadPr
   
   useNewMessagesPolling(conversationId, pollingCursor);
 
-  // The 'newestMessage' used for marking read can remain the raw newest message (even if optimistic),
-  // since reading an optimistic message doesn't hurt, but marking read usually depends on real messages anyway.
-  // We'll use pollingCursor for that too just to be safe.
   useEffect(() => {
     if (pollingCursor) {
       markRead();
@@ -43,26 +36,26 @@ export function MessageThread({ conversationId, currentUserId }: MessageThreadPr
     if (!isFetchingNextPage && flatMessages.length > 0) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [pages.length, flatMessages.length, isFetchingNextPage]); // Scroll when a new page is added (like optimistic insert)
+  }, [pages.length, flatMessages.length, isFetchingNextPage]);
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex justify-center items-center bg-[#141822]">
-        <Loader2Icon className="w-8 h-8 text-[#06b6d4] animate-spin" />
+      <div className="flex-1 flex justify-center items-center bg-background">
+        <Loader2Icon className="w-8 h-8 text-accent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto p-4 bg-[#141822] gap-4">
+    <div className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 bg-background gap-5">
       {hasNextPage && (
         <div className="text-center pb-4">
           <button 
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="text-xs text-[#06b6d4] hover:underline"
+            className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-elevated border border-border text-secondary hover:text-accent hover:border-accent transition-all shadow-elevation-low disabled:opacity-50"
           >
-            {isFetchingNextPage ? 'Loading...' : 'Load older messages'}
+            {isFetchingNextPage ? 'Loading older messages...' : 'Load older messages'}
           </button>
         </div>
       )}
@@ -72,24 +65,24 @@ export function MessageThread({ conversationId, currentUserId }: MessageThreadPr
         const isOptimistic = msg.senderId === 'optimistic';
         
         return (
-          <div key={msg.id || index} className={`flex flex-col ${isMine || isOptimistic ? 'items-end' : 'items-start'}`}>
+          <div key={msg.id || index} className={`flex flex-col w-full ${isMine || isOptimistic ? 'items-end' : 'items-start'}`}>
             <div 
-              className={`px-4 py-2 rounded-[12px] max-w-[80%] text-sm ${
+              className={`px-5 py-3 rounded-2xl max-w-[85%] sm:max-w-[70%] text-[15px] leading-relaxed shadow-elevation-flat ${
                 isMine || isOptimistic
-                  ? 'bg-[#06b6d4] text-[#0a0e16] rounded-br-none' 
-                  : 'bg-[#1e2433] text-[#f1f5f9] rounded-bl-none border border-[#263042]'
-              } ${isOptimistic ? 'opacity-70' : ''}`}
+                  ? 'bg-accent text-white rounded-br-sm' 
+                  : 'bg-surface border border-border text-primary rounded-bl-sm'
+              } ${isOptimistic ? 'opacity-70 scale-[0.98] transition-all' : ''}`}
             >
               {msg.body}
             </div>
-            <span className="text-[10px] text-[#64748b] mt-1 px-1">
+            <span className="text-[11px] font-mono tracking-wider text-muted mt-1.5 px-1">
               {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         );
       })}
       
-      <div ref={bottomRef} />
+      <div ref={bottomRef} className="h-1" />
     </div>
   );
 }

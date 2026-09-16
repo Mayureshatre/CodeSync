@@ -1,7 +1,8 @@
-
 'use client';
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { SearchIcon, Loader2Icon, ShieldBanIcon, CheckCircle2Icon } from 'lucide-react';
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -37,55 +38,92 @@ export default function UsersPage() {
   const users = data?.data?.items || [];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">User Moderation</h1>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">User Moderation</h1>
+        <p className="text-secondary mt-2">Manage user accounts, roles, and platform access.</p>
+      </div>
       
-      <input 
-        type="text" 
-        placeholder="Search users..." 
-        className="w-full border p-2 rounded"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-      />
+      <div className="relative max-w-md">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <SearchIcon className="w-5 h-5 text-muted" />
+        </div>
+        <input 
+          type="text" 
+          placeholder="Search by email or username..." 
+          className="w-full bg-surface border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-elevation-low"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </div>
 
-      {suspendMutation.error && <div className="bg-red-50 text-red-600 p-3 rounded">{(suspendMutation.error as Error).message}</div>}
+      {suspendMutation.error && (
+        <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm font-medium">
+          {(suspendMutation.error as Error).message}
+        </div>
+      )}
 
-      <div className="bg-white shadow rounded overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Status</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((u: any) => (
-              <tr key={u.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{u.email}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">{u.role}</td>
-                <td className="px-6 py-4 text-sm">
-                  <span className={`px-2 py-1 rounded text-xs ${u.status === 'suspended' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                    {u.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  {u.status !== 'suspended' && (
-                    <button 
-                      onClick={() => {
-                        const reason = prompt('Reason for suspension:');
-                        if (reason) suspendMutation.mutate({ id: u.id, reason });
-                      }}
-                      className="text-red-600 hover:text-red-900 disabled:opacity-50"
-                      disabled={suspendMutation.isPending}
-                    >Suspend</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-surface border border-border rounded-2xl shadow-elevation-flat overflow-hidden">
+        {isLoading ? (
+          <div className="flex justify-center items-center p-12">
+            <Loader2Icon className="w-8 h-8 text-accent animate-spin" />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="p-12 text-center text-secondary border-t border-border border-dashed m-4 rounded-xl">
+            No users found matching your search.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-surface-elevated/50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider">User / Email</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-muted uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {users.map((u: any) => (
+                  <tr key={u.id} className="hover:bg-surface-elevated/20 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-primary">{u.email}</div>
+                      <div className="text-xs text-muted font-mono mt-0.5">{u.id}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-secondary font-medium capitalize">{u.role}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {u.status === 'suspended' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-error/10 text-error border border-error/20">
+                          <ShieldBanIcon className="w-3.5 h-3.5" /> Suspended
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-success/10 text-success border border-success/20">
+                          <CheckCircle2Icon className="w-3.5 h-3.5" /> Active
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      {u.status !== 'suspended' && (
+                        <button 
+                          onClick={() => {
+                            const reason = prompt('Reason for suspension:');
+                            if (reason) suspendMutation.mutate({ id: u.id, reason });
+                          }}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-error hover:bg-error/10 transition-colors disabled:opacity-50 border border-transparent hover:border-error/20"
+                          disabled={suspendMutation.isPending}
+                        >
+                          <ShieldBanIcon className="w-4 h-4" /> Suspend
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

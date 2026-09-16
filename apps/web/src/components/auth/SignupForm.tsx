@@ -45,53 +45,53 @@ export function SignupForm() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-[#181c24] p-8 rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_#263042]">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">Create an Account</h1>
-          <p className="text-[#94a3b8] text-sm">Join CodeSync and find your missing piece</p>
+      <div className="bg-surface p-8 sm:p-10 rounded-2xl border border-border shadow-elevation-overlay">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-primary mb-2">Create an Account</h1>
+          <p className="text-secondary text-sm">Join CodeSync and find your missing piece</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-500 text-sm rounded-[8px]">
+          <div className="mb-6 p-4 bg-error/10 border border-error/20 text-error text-sm rounded-xl">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-[#f1f5f9] mb-1">Email</label>
+            <label className="block text-sm font-medium text-primary mb-1.5">Email</label>
             <input
               {...register('email')}
               type="email"
               placeholder="you@example.com"
-              className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4] transition-all"
+              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
             />
-            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
+            {errors.email && <p className="mt-1.5 text-sm text-error">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#f1f5f9] mb-1">Password</label>
+            <label className="block text-sm font-medium text-primary mb-1.5">Password</label>
             <input
               {...register('password')}
               type="password"
               placeholder="••••••••"
-              className="w-full bg-[#141822] border border-[#263042] rounded-[8px] px-3 py-2 text-[14px] text-white placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 focus:border-[#06b6d4] transition-all"
+              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
             />
-            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>}
+            {errors.password && <p className="mt-1.5 text-sm text-error">{errors.password.message}</p>}
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#06b6d4] hover:bg-[#0891b2] active:bg-[#0e7490] text-[#0a0e16] font-bold py-2 px-4 rounded-[8px] min-h-[44px] flex items-center justify-center transition-colors disabled:opacity-50"
+            className="w-full bg-accent hover:opacity-90 active:scale-[0.98] text-white font-medium py-2.5 px-4 rounded-xl min-h-[44px] flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:active:scale-100 shadow-elevation-low"
           >
             {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : 'Sign Up'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-[#94a3b8]">
+        <p className="mt-8 text-center text-sm text-secondary">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-[#06b6d4] hover:text-[#0891b2]">
+          <Link href="/auth/login" className="font-medium text-primary hover:text-accent transition-colors">
             Sign in
           </Link>
         </p>

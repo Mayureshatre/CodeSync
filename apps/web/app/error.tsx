@@ -14,13 +14,13 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded shadow max-w-lg mx-auto mt-10">
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Unexpected Error</h2>
-      <p className="text-gray-600 mb-4 text-center">Something went wrong while loading this page.</p>
-      {error.digest && <p className="text-xs text-gray-400 mb-4">Error ID: {error.digest}</p>}
+    <div className="flex flex-col items-center justify-center p-8 bg-surface border border-border shadow-elevation-flat rounded-2xl max-w-lg mx-auto mt-10">
+      <h2 className="text-xl font-bold text-primary mb-2">Unexpected Error</h2>
+      <p className="text-secondary mb-6 text-center">Something went wrong while loading this page.</p>
+      {error.digest && <p className="text-xs text-muted font-mono mb-4 bg-surface-elevated px-2 py-1 rounded">Error ID: {error.digest}</p>}
       <button
         onClick={() => reset()}
-        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        className="px-5 py-2.5 bg-accent text-white font-medium rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-elevation-low"
       >
         Try again
       </button>
