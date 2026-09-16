@@ -59,3 +59,15 @@ export async function authorizeRealtimeChannel(userId: string, channelName: stri
 
   return tokenRequest;
 }
+
+export async function publishRealtimeEvent(channelName: string, eventName: string, data: any) {
+  try {
+    const client = getAblyClient();
+    const channel = client.channels.get(channelName);
+    await channel.publish(eventName, data);
+  } catch (error) {
+    // We explicitly throw here so the caller can handle it,
+    // ensuring we know if realtime fails independently.
+    throw error;
+  }
+}

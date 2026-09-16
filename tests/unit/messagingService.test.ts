@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { prisma } from '../../apps/web/src/server/db';
 import { sendMessage, getMessages, getUserConversations, markConversationAsRead } from '../../apps/web/src/server/services/messagingService';
 import { createNotification } from '../../apps/web/src/server/services/notificationService';
+import { publishRealtimeEvent, getConversationChannelName } from '../../apps/web/src/server/services/realtimeService';
 import { ForbiddenError, NotFoundError } from '../../apps/web/src/server/errors';
 
 vi.mock('../../apps/web/src/server/db', () => ({
@@ -31,6 +32,11 @@ vi.mock('../../apps/web/src/server/db', () => ({
 
 vi.mock('../../apps/web/src/server/services/notificationService', () => ({
   createNotification: vi.fn().mockResolvedValue({})
+}));
+
+vi.mock('../../apps/web/src/server/services/realtimeService', () => ({
+  publishRealtimeEvent: vi.fn().mockResolvedValue(undefined),
+  getConversationChannelName: vi.fn((id) => `private-conversation-${id}`)
 }));
 
 describe('Messaging Service', () => {
@@ -63,14 +69,16 @@ describe('Messaging Service', () => {
   });
 
   describe('Sending Messages', () => {
-    it('creates message, updates conversation, and triggers notification', async () => {
+    it('creates message, updates conversation, triggers notification, and publishes realtime event', async () => {
       const mockParticipant = {
         id: 'cp-1', conversationId: 'conv-1', userId: 'user-1', lastReadAt: null,
         conversation: { id: 'conv-1', type: 'dm', projectId: null, updatedAt: new Date() }
       };
 
       vi.mocked(prisma.conversationParticipant.findUnique).mockResolvedValueOnce(mockParticipant as any);
-      vi.mocked(prisma.message.create).mockResolvedValueOnce({ id: 'msg-1', body: 'Hi', senderId: 'user-1' } as any);
+      
+      const mockMessage = { id: 'msg-1', body: 'Hi', senderId: 'user-1', conversationId: 'conv-1' };
+      vi.mocked(prisma.message.create).mockResolvedValueOnce(mockMessage as any);
       
       // Mock other participants for notification
       vi.mocked(prisma.conversationParticipant.findMany).mockResolvedValueOnce([
@@ -79,6 +87,7 @@ describe('Messaging Service', () => {
 
       const result = await sendMessage('user-1', 'conv-1', { body: 'Hi' });
 
+      // 1. Persistence Tests
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(prisma.message.create).toHaveBeenCalledWith({
         data: { conversationId: 'conv-1', senderId: 'user-1', body: 'Hi' }
@@ -88,14 +97,49 @@ describe('Messaging Service', () => {
         data: { updatedAt: expect.any(Date) }
       });
       
-      // Must notify recipients, NOT the sender
+      // 2. Notification Tests
       expect(createNotification).toHaveBeenCalledWith('user-2', 'MESSAGE', expect.objectContaining({
         event: 'message_received',
         messageId: 'msg-1'
       }));
       expect(createNotification).toHaveBeenCalledTimes(1);
 
+      // 3. Realtime Event Tests
+      expect(publishRealtimeEvent).toHaveBeenCalledTimes(1);
+      expect(publishRealtimeEvent).toHaveBeenCalledWith(
+        'private-conversation-conv-1',
+        'NewMessage',
+        mockMessage
+      );
+
+      // 4. Return Test
       expect(result.id).toBe('msg-1');
+    });
+
+    it('does not rollback message or fail REST request if Ably publish fails', async () => {
+      const mockParticipant = {
+        id: 'cp-1', conversationId: 'conv-1', userId: 'user-1', lastReadAt: null,
+        conversation: { id: 'conv-1', type: 'dm', projectId: null, updatedAt: new Date() }
+      };
+
+      vi.mocked(prisma.conversationParticipant.findUnique).mockResolvedValueOnce(mockParticipant as any);
+      
+      const mockMessage = { id: 'msg-1', body: 'Hi', senderId: 'user-1', conversationId: 'conv-1' };
+      vi.mocked(prisma.message.create).mockResolvedValueOnce(mockMessage as any);
+      vi.mocked(prisma.conversationParticipant.findMany).mockResolvedValueOnce([]);
+
+      // Mock Ably throwing an error
+      vi.mocked(publishRealtimeEvent).mockRejectedValueOnce(new Error('Ably timeout'));
+
+      // The REST request should still succeed
+      const result = await sendMessage('user-1', 'conv-1', { body: 'Hi' });
+
+      // Message still persisted
+      expect(prisma.$transaction).toHaveBeenCalled();
+      // Returned successfully
+      expect(result.id).toBe('msg-1');
+      // Ably was actually called
+      expect(publishRealtimeEvent).toHaveBeenCalledTimes(1);
     });
   });
 

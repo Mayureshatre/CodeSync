@@ -2,6 +2,7 @@ import { prisma } from '../db';
 import { NotFoundError, ForbiddenError } from '../errors';
 import { createNotification } from './notificationService';
 import { SendMessageInput } from '../../lib/validations/messaging';
+import { publishRealtimeEvent, getConversationChannelName } from './realtimeService';
 
 export async function createConversation(userId: string, opts: { targetUserId?: string; projectId?: string }) {
   if (opts.projectId) {
@@ -237,6 +238,14 @@ export async function sendMessage(userId: string, conversationId: string, data: 
     }
   } catch (notifError) {
     console.error('Failed to query other participants for notification', notifError);
+  }
+
+  // Publish realtime event
+  try {
+    const channelName = getConversationChannelName(conversationId);
+    await publishRealtimeEvent(channelName, 'NewMessage', message);
+  } catch (realtimeError) {
+    console.error('Failed to publish realtime message event', realtimeError);
   }
 
   return message;
