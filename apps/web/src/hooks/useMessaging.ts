@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import type { Message as AblyMessage } from 'ably';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export type Message = {
@@ -166,4 +168,96 @@ export function useMarkAsRead(conversationId: string) {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
+}
+
+export function useRealtimeConversation(conversationId: string) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    let client: any = null;
+    let channel: any = null;
+    let onMessage: any = null;
+
+    const initAbly = () => {
+      const Ably = (window as any).Ably;
+      if (!Ably) return; // Should not happen since we wait for script load
+
+      client = new Ably.Realtime({
+        authCallback: async (tokenParams: any, callback: any) => {
+        try {
+          const res = await fetch('/api/v1/realtime/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channelName: `private-conversation-${conversationId}` })
+          });
+          if (!res.ok) throw new Error('Realtime auth failed');
+          const tokenRequest = await res.json();
+          callback(null, tokenRequest);
+        } catch (err) {
+          callback(err as any, null);
+        }
+      }
+    });
+
+    const channelName = `private-conversation-${conversationId}`;
+    channel = client.channels.get(channelName);
+
+    onMessage = (message: AblyMessage) => {
+      // Guard payload
+      if (!message.data || typeof message.data !== 'object') return;
+      const newMsg = message.data as Message;
+      if (!newMsg.id || !newMsg.body) return;
+
+      queryClient.setQueryData(
+        ['conversations', conversationId, 'messages'],
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          
+          // Check for duplicates
+          const allItems = oldData.pages.flatMap((p: any) => p.items);
+          if (allItems.some((m: any) => m.id === newMsg.id)) {
+            return oldData;
+          }
+
+          const newPages = [...oldData.pages];
+          const firstPage = { ...newPages[0] };
+          firstPage.items = [...firstPage.items, newMsg];
+          newPages[0] = firstPage;
+          return { ...oldData, pages: newPages };
+        }
+      );
+      
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    };
+
+    channel.subscribe('NewMessage', onMessage);
+  };
+
+  const existingScript = document.getElementById('ably-sdk');
+  if (!existingScript) {
+    const script = document.createElement('script');
+    script.src = '/api/v1/ably-sdk';
+    script.id = 'ably-sdk';
+    script.async = true;
+    script.onload = initAbly;
+    document.body.appendChild(script);
+  } else {
+    if ((window as any).Ably) {
+      initAbly();
+    } else {
+      existingScript.addEventListener('load', initAbly);
+    }
+  }
+
+  return () => {
+    if (channel && onMessage) {
+      channel.unsubscribe('NewMessage', onMessage);
+    }
+    if (client) {
+      client.close();
+    }
+  };
+}, [conversationId, queryClient]);
 }

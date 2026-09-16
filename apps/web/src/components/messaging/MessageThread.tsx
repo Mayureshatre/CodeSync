@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { useHistoricalMessages, useNewMessagesPolling, useMarkAsRead, Message, getPollingCursor } from '../../hooks/useMessaging';
+import { useHistoricalMessages, useNewMessagesPolling, useRealtimeConversation, useMarkAsRead, Message, getPollingCursor } from '../../hooks/useMessaging';
 import { Loader2Icon } from 'lucide-react';
 
 interface MessageThreadProps {
@@ -13,6 +13,9 @@ export function MessageThread({ conversationId, currentUserId }: MessageThreadPr
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useHistoricalMessages(conversationId);
   const { mutate: markRead } = useMarkAsRead(conversationId);
   
+  // Connect to Ably for realtime new messages (enhances existing polling)
+  useRealtimeConversation(conversationId);
+
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const pages = data?.pages || [];
