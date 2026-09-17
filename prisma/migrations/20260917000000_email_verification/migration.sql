@@ -1,4 +1,4 @@
-﻿-- CreateTable
+-- CreateTable
 CREATE TABLE "VerificationToken" (
     "id" TEXT NOT NULL,
     "email" CITEXT NOT NULL,
