@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Message as AblyMessage } from 'ably';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -170,94 +170,145 @@ export function useMarkAsRead(conversationId: string) {
   });
 }
 
-export function useRealtimeConversation(conversationId: string) {
+export function useRealtimeConversation(conversationId: string, currentUserId?: string) {
   const queryClient = useQueryClient();
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     if (!conversationId) return;
 
     let client: any = null;
-    let channel: any = null;
     let onMessage: any = null;
+    let onTypingStarted: any = null;
+    let onTypingStopped: any = null;
+
+    const typingTimers: Record<string, NodeJS.Timeout> = {};
 
     const initAbly = () => {
       const Ably = (window as any).Ably;
-      if (!Ably) return; // Should not happen since we wait for script load
+      if (!Ably) return;
 
       client = new Ably.Realtime({
         authCallback: async (tokenParams: any, callback: any) => {
-        try {
-          const res = await fetch('/api/v1/realtime/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channelName: `private-conversation-${conversationId}` })
-          });
-          if (!res.ok) throw new Error('Realtime auth failed');
-          const tokenRequest = await res.json();
-          callback(null, tokenRequest);
-        } catch (err) {
-          callback(err as any, null);
-        }
-      }
-    });
-
-    const channelName = `private-conversation-${conversationId}`;
-    channel = client.channels.get(channelName);
-
-    onMessage = (message: AblyMessage) => {
-      // Guard payload
-      if (!message.data || typeof message.data !== 'object') return;
-      const newMsg = message.data as Message;
-      if (!newMsg.id || !newMsg.body) return;
-
-      queryClient.setQueryData(
-        ['conversations', conversationId, 'messages'],
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          
-          // Check for duplicates
-          const allItems = oldData.pages.flatMap((p: any) => p.items);
-          if (allItems.some((m: any) => m.id === newMsg.id)) {
-            return oldData;
+          try {
+            const res = await fetch('/api/v1/realtime/auth', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ channelName: `private-conversation-${conversationId}` })
+            });
+            if (!res.ok) throw new Error('Realtime auth failed');
+            const tokenRequest = await res.json();
+            callback(null, tokenRequest);
+          } catch (err) {
+            callback(err as any, null);
           }
-
-          const newPages = [...oldData.pages];
-          const firstPage = { ...newPages[0] };
-          firstPage.items = [...firstPage.items, newMsg];
-          newPages[0] = firstPage;
-          return { ...oldData, pages: newPages };
         }
-      );
-      
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      });
+
+      const channelName = `private-conversation-${conversationId}`;
+      const channel = client.channels.get(channelName);
+      channelRef.current = channel;
+
+      onMessage = (message: AblyMessage) => {
+        if (!message.data || typeof message.data !== 'object') return;
+        const newMsg = message.data as Message;
+        if (!newMsg.id || !newMsg.body) return;
+
+        queryClient.setQueryData(
+          ['conversations', conversationId, 'messages'],
+          (oldData: any) => {
+            if (!oldData) return oldData;
+            
+            const allItems = oldData.pages.flatMap((p: any) => p.items);
+            if (allItems.some((m: any) => m.id === newMsg.id)) {
+              return oldData;
+            }
+
+            const newPages = [...oldData.pages];
+            const firstPage = { ...newPages[0] };
+            firstPage.items = [...firstPage.items, newMsg];
+            newPages[0] = firstPage;
+            return { ...oldData, pages: newPages };
+          }
+        );
+        
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      };
+
+      onTypingStarted = (message: AblyMessage) => {
+        const payload = message.data as { userId: string };
+        if (!payload?.userId || payload.userId === currentUserId) return;
+
+        queryClient.setQueryData(['typing', conversationId], (old: string[] = []) => {
+          if (!old.includes(payload.userId)) return [...old, payload.userId];
+          return old;
+        });
+
+        if (typingTimers[payload.userId]) clearTimeout(typingTimers[payload.userId]);
+        typingTimers[payload.userId] = setTimeout(() => {
+          queryClient.setQueryData(['typing', conversationId], (old: string[] = []) => {
+            return old.filter(id => id !== payload.userId);
+          });
+          delete typingTimers[payload.userId];
+        }, 3000);
+      };
+
+      onTypingStopped = (message: AblyMessage) => {
+        const payload = message.data as { userId: string };
+        if (!payload?.userId) return;
+
+        if (typingTimers[payload.userId]) {
+          clearTimeout(typingTimers[payload.userId]);
+          delete typingTimers[payload.userId];
+        }
+        queryClient.setQueryData(['typing', conversationId], (old: string[] = []) => {
+          return old.filter(id => id !== payload.userId);
+        });
+      };
+
+      channel.subscribe('NewMessage', onMessage);
+      channel.subscribe('TypingStarted', onTypingStarted);
+      channel.subscribe('TypingStopped', onTypingStopped);
     };
 
-    channel.subscribe('NewMessage', onMessage);
-  };
-
-  const existingScript = document.getElementById('ably-sdk');
-  if (!existingScript) {
-    const script = document.createElement('script');
-    script.src = '/api/v1/ably-sdk';
-    script.id = 'ably-sdk';
-    script.async = true;
-    script.onload = initAbly;
-    document.body.appendChild(script);
-  } else {
-    if ((window as any).Ably) {
-      initAbly();
+    const existingScript = document.getElementById('ably-sdk');
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.src = '/api/v1/ably-sdk';
+      script.id = 'ably-sdk';
+      script.async = true;
+      script.onload = initAbly;
+      document.body.appendChild(script);
     } else {
-      existingScript.addEventListener('load', initAbly);
+      if ((window as any).Ably) {
+        initAbly();
+      } else {
+        existingScript.addEventListener('load', initAbly);
+      }
     }
-  }
 
-  return () => {
-    if (channel && onMessage) {
-      channel.unsubscribe('NewMessage', onMessage);
-    }
-    if (client) {
-      client.close();
+    return () => {
+      Object.values(typingTimers).forEach(clearTimeout);
+      queryClient.setQueryData(['typing', conversationId], []);
+      
+      const channel = channelRef.current;
+      if (channel) {
+        if (onMessage) channel.unsubscribe('NewMessage', onMessage);
+        if (onTypingStarted) channel.unsubscribe('TypingStarted', onTypingStarted);
+        if (onTypingStopped) channel.unsubscribe('TypingStopped', onTypingStopped);
+      }
+      channelRef.current = null;
+      if (client) {
+        client.close();
+      }
+    };
+  }, [conversationId, currentUserId, queryClient]);
+
+  const publishTyping = (isTyping: boolean) => {
+    if (channelRef.current) {
+      channelRef.current.publish(isTyping ? 'TypingStarted' : 'TypingStopped', { userId: currentUserId });
     }
   };
-}, [conversationId, queryClient]);
+
+  return { publishTyping };
 }

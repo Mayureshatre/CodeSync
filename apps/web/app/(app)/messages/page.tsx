@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { ConversationList } from '../../../src/components/messaging/ConversationList';
 import { MessageThread } from '../../../src/components/messaging/MessageThread';
-import { MessageComposer } from '../../../src/components/messaging/MessageComposer';
 import { useSession } from 'next-auth/react';
 import { MessageSquareIcon, ArrowLeft } from 'lucide-react';
 
@@ -44,7 +43,6 @@ export default function MessagingPage() {
             </div>
             
             <MessageThread conversationId={activeConversationId} currentUserId={userId} />
-            <MessageComposer conversationId={activeConversationId} />
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-secondary bg-surface">

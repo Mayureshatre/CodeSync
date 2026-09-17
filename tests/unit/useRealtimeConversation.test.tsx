@@ -50,7 +50,7 @@ describe('useRealtimeConversation', () => {
     vi.spyOn(document, 'createElement').mockImplementation((tag) => {
       if (tag === 'script') {
         setTimeout(() => {
-          if (mockScript.onload) mockScript.onload();
+          
         }, 0);
         return mockScript as any;
       }
@@ -59,7 +59,7 @@ describe('useRealtimeConversation', () => {
 
     const originalAppendChild = document.body.appendChild.bind(document.body);
     vi.spyOn(document.body, 'appendChild').mockImplementation((node) => {
-      if (node === mockScript) return node;
+      if (node === mockScript) { if (mockScript.onload) mockScript.onload(); return node; }
       return originalAppendChild(node);
     });
   });

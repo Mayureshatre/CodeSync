@@ -1,19 +1,63 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSendMessage } from '../../hooks/useMessaging';
 import { SendIcon } from 'lucide-react';
 
-export function MessageComposer({ conversationId }: { conversationId: string }) {
+interface MessageComposerProps {
+  conversationId: string;
+  onTyping?: (isTyping: boolean) => void;
+}
+
+export function MessageComposer({ conversationId, onTyping }: MessageComposerProps) {
   const [body, setBody] = useState('');
   const { mutate: sendMessage, isPending } = useSendMessage(conversationId);
+  const isTypingRef = useRef(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerTyping = () => {
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      if (onTyping) onTyping(true);
+    }
+    
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      if (onTyping) onTyping(false);
+    }, 2000);
+  };
+
+  const clearTyping = () => {
+    if (isTypingRef.current) {
+      isTypingRef.current = false;
+      if (onTyping) onTyping(false);
+    }
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+  };
+
+  useEffect(() => {
+    return () => clearTyping();
+  }, [conversationId]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setBody(e.target.value);
+    if (e.target.value.trim()) {
+      triggerTyping();
+    } else {
+      clearTyping();
+    }
+  };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!body.trim() || isPending) return;
 
     sendMessage(body.trim(), {
-      onSuccess: () => setBody('')
+      onSuccess: () => {
+        setBody('');
+        clearTyping();
+      }
     });
   };
 
@@ -25,7 +69,7 @@ export function MessageComposer({ conversationId }: { conversationId: string }) 
       <div className="flex-1 bg-background border border-border rounded-2xl shadow-elevation-flat relative focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 transition-all">
         <textarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={handleChange}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();

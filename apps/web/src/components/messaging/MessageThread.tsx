@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { useHistoricalMessages, useNewMessagesPolling, useRealtimeConversation, useMarkAsRead, Message, getPollingCursor } from '../../hooks/useMessaging';
+import { useHistoricalMessages, useNewMessagesPolling, useRealtimeConversation, useMarkAsRead, Message, getPollingCursor, useConversations } from '../../hooks/useMessaging';
+import { useQuery } from '@tanstack/react-query';
 import { Loader2Icon } from 'lucide-react';
+import { MessageComposer } from './MessageComposer';
 
 interface MessageThreadProps {
   conversationId: string;
@@ -12,9 +14,21 @@ interface MessageThreadProps {
 export function MessageThread({ conversationId, currentUserId }: MessageThreadProps) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useHistoricalMessages(conversationId);
   const { mutate: markRead } = useMarkAsRead(conversationId);
+  const { data: conversations } = useConversations();
+  const conv = conversations?.find(c => c.id === conversationId);
   
   // Connect to Ably for realtime new messages (enhances existing polling)
-  useRealtimeConversation(conversationId);
+  const { publishTyping } = useRealtimeConversation(conversationId, currentUserId);
+
+  const { data: typingUserIds = [] } = useQuery<string[]>({ 
+    queryKey: ['typing', conversationId],
+    initialData: [] 
+  });
+
+  const typingNames = typingUserIds.map(id => {
+    const p = conv?.participants.find(p => p.userId === id);
+    return p?.user.name || 'Someone';
+  });
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -50,6 +64,7 @@ export function MessageThread({ conversationId, currentUserId }: MessageThreadPr
   }
 
   return (
+  <>
     <div className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 bg-background gap-5">
       {hasNextPage && (
         <div className="text-center pb-4">
@@ -85,7 +100,22 @@ export function MessageThread({ conversationId, currentUserId }: MessageThreadPr
         );
       })}
       
+      {typingNames.length > 0 && (
+        <div className="flex items-center gap-2 self-start text-sm text-muted motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 duration-300">
+          <div className="flex gap-1 items-center px-1">
+            <span className="w-1.5 h-1.5 bg-muted/80 rounded-full motion-safe:animate-bounce [animation-delay:-0.3s]"></span>
+            <span className="w-1.5 h-1.5 bg-muted/80 rounded-full motion-safe:animate-bounce [animation-delay:-0.15s]"></span>
+            <span className="w-1.5 h-1.5 bg-muted/80 rounded-full motion-safe:animate-bounce"></span>
+          </div>
+          {typingNames.length === 1 
+            ? `${typingNames[0]} is typing...` 
+            : `${typingNames.join(', ')} are typing...`}
+        </div>
+      )}
+
       <div ref={bottomRef} className="h-1" />
     </div>
+    <MessageComposer conversationId={conversationId} onTyping={publishTyping} />
+  </>
   );
 }
