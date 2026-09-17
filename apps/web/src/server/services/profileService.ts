@@ -1,6 +1,7 @@
-import { prisma } from '../db';
-import { NotFoundError, ConflictError } from '../errors';
+﻿import { prisma } from '../db';
+import { NotFoundError, ConflictError, ForbiddenError } from '../errors';
 import { ProfileInput } from '../../lib/validations/profile';
+import { isValidAvatarUrl } from './storageService';
 
 export async function getProfileByUserId(userId: string) {
   return prisma.profile.findUnique({
@@ -46,6 +47,11 @@ export async function getProfileByUsername(username: string, actorId?: string) {
 }
 
 export async function updateProfile(userId: string, data: ProfileInput) {
+  // Enforce server-side authorization on avatarUrl
+  if (data.avatarUrl && !isValidAvatarUrl(userId, data.avatarUrl)) {
+    throw new ForbiddenError('Invalid or unauthorized avatar URL');
+  }
+
   // Check username uniqueness if changed
   const existingWithUsername = await prisma.profile.findFirst({
     where: { 
@@ -67,6 +73,7 @@ export async function updateProfile(userId: string, data: ProfileInput) {
       linkedinUrl: data.linkedinUrl || null,
       portfolioUrl: data.portfolioUrl || null,
       websiteUrl: data.websiteUrl || null,
+      avatarUrl: data.avatarUrl || null,
     },
     create: {
       userId,
@@ -75,6 +82,7 @@ export async function updateProfile(userId: string, data: ProfileInput) {
       linkedinUrl: data.linkedinUrl || null,
       portfolioUrl: data.portfolioUrl || null,
       websiteUrl: data.websiteUrl || null,
+      avatarUrl: data.avatarUrl || null,
     }
   });
 }

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 export const profileSchema = z.object({
   displayName: z.string().min(2, "Name must be at least 2 characters").max(50),
@@ -16,6 +16,7 @@ export const profileSchema = z.object({
   linkedinUrl: z.string().url().optional().nullable().or(z.literal('')),
   portfolioUrl: z.string().url().optional().nullable().or(z.literal('')),
   websiteUrl: z.string().url().optional().nullable().or(z.literal('')),
+  avatarUrl: z.string().url().optional().nullable().or(z.literal('')),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;
