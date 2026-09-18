@@ -99,7 +99,7 @@ export function LoginForm() {
               <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-surface text-muted">Or continue with</span>
+              <span className="px-4 bg-surface text-secondary">Or continue with</span>
             </div>
           </div>
 
