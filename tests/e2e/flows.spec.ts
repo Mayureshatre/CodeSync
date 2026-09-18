@@ -13,7 +13,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
   });
 
   test('Flow 1: Signup -> Verify -> Onboarding -> Profile + A11y', async ({ page }) => {
-    await page.goto('/signup');
+    await page.goto('/auth/signup');
     
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
@@ -38,7 +38,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     await page.waitForURL(/.*login.*/, { timeout: 10000 }).catch(() => {});
 
     // Login and finish onboarding
-    await page.goto('/login');
+    await page.goto('/auth/login');
     await page.fill('input[name="email"]', testEmail);
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
@@ -55,7 +55,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
   });
 
   test('Flow 2: Project Publish -> Recommendation + A11y', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/auth/login');
     await page.fill('input[name="email"]', 'e2e1@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
@@ -74,7 +74,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
 
   test('Flow 3: Apply -> Accept -> Workspace', async ({ page, context }) => {
     // 1. Developer (e2e2) applies for the project
-    await page.goto('/login');
+    await page.goto('/auth/login');
     await page.fill('input[name="email"]', 'e2e2@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
@@ -98,7 +98,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
 
     // 2. Owner (e2e1) accepts the application
     await context.clearCookies();
-    await page.goto('/login');
+    await page.goto('/auth/login');
     await page.fill('input[name="email"]', 'e2e1@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
@@ -120,7 +120,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
 
   test('Flow 4: Invite -> Accept -> Workspace', async ({ page, context }) => {
     // 1. Owner (e2e1) invites developer (e2e3)
-    await page.goto('/login');
+    await page.goto('/auth/login');
     await page.fill('input[name="email"]', 'e2e1@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
@@ -139,7 +139,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
 
     // 2. Developer (e2e3) accepts
     await context.clearCookies();
-    await page.goto('/login');
+    await page.goto('/auth/login');
     await page.fill('input[name="email"]', 'e2e3@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
@@ -154,7 +154,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
 
   test('Flow 5: Report -> Admin Resolution + A11y', async ({ page, context }) => {
     // User reports something
-    await page.goto('/login');
+    await page.goto('/auth/login');
     await page.fill('input[name="email"]', 'e2e1@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
@@ -171,7 +171,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
 
     // Admin resolves it
     await context.clearCookies();
-    await page.goto('/login');
+    await page.goto('/auth/login');
     await page.fill('input[name="email"]', 'admin@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
