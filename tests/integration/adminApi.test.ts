@@ -92,6 +92,17 @@ describe('Admin Reports API Integration', () => {
     const updatedReport = await prisma.report.findUnique({ where: { id: testReport.id } });
     expect(updatedReport?.status).toBe('actioned');
     expect(updatedReport?.resolutionNotes).toBe('Integration resolved');
-    expect(updatedReport?.resolvedById).toBe(testAdmin.id);
+    
+    const adminAction = await prisma.adminAction.findFirst({
+      where: {
+        targetId: testReport.id,
+        targetType: 'report',
+        actionType: 'report_actioned'
+      }
+    });
+    
+    expect(adminAction).toBeTruthy();
+    expect(adminAction?.adminId).toBe(testAdmin.id);
+    expect(adminAction?.actionType).toBe('report_actioned');
   });
 });
