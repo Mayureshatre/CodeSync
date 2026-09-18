@@ -3,8 +3,7 @@ import { startNotificationWorker } from './notificationWorker';
 import { startDigestWorker } from './digestWorker';
 import { startReviewWorker } from './reviewWorker';
 import { scheduleWeeklyDigest } from '@codesync/core/queue';
-import { recomputeAndPersistMatch } from '@codesync/core/matchingService';
-import { prisma } from '@codesync/core/db';
+import { recomputeAndPersistMatch, recomputeAllForUser, recomputeAllForProject } from '@codesync/core/matchingService';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
@@ -13,21 +12,14 @@ const matchingWorker = new Worker('matching', async (job) => {
   const { userId, projectId } = job.data;
 
   if (userId && projectId) {
+    // Single-pair recompute: existing function is already optimal (two targeted findUnique calls)
     await recomputeAndPersistMatch(userId, projectId);
   } else if (userId) {
-    // Recompute all open projects for this user
-    const projects = await prisma.project.findMany({ where: { status: 'open' } });
-    for (const p of projects) {
-      await recomputeAndPersistMatch(userId, p.id);
-    }
+    // All projects for a user: fetch user once, iterate projects in memory
+    await recomputeAllForUser(userId);
   } else if (projectId) {
-    // Recompute all available users for this project
-    const users = await prisma.user.findMany({ 
-      where: { profile: { availability: { not: 'not_looking' } } } 
-    });
-    for (const u of users) {
-      await recomputeAndPersistMatch(u.id, projectId);
-    }
+    // All users for a project: fetch project once, iterate users in memory
+    await recomputeAllForProject(projectId);
   }
 }, { connection: { url: REDIS_URL } });
 

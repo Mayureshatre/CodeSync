@@ -93,6 +93,7 @@ export async function getInvitationsForDeveloper(userId: string) {
     where: { invitedUserId: userId },
     include: { project: true, role: true },
     orderBy: { createdAt: 'desc' },
+    take: 100,
   });
 }
 

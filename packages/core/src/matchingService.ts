@@ -1,4 +1,4 @@
-﻿import { prisma } from './db';
+import { prisma } from './db';
 import { getMatchSurfacingThreshold } from './configService';
 import { calculateProfileCompleteness } from './profileUtils';
 import { createNotification } from './notificationService';
@@ -246,4 +246,174 @@ export async function recomputeAndPersistMatch(userId: string, projectId: string
   }
 
   return match;
+}
+
+/**
+ * Batch: recompute all open projects for a given user.
+ * Fetches the user once, then iterates projects in memory.
+ * Preserves all hard filters, weights, and versioning from computeMatchScore.
+ */
+export async function recomputeAllForUser(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      profile: true,
+      userSkills: { include: { skill: true } }
+    }
+  });
+
+  if (!user || !user.profile) {
+    // No profile — remove any stale match rows for this user
+    await prisma.match.deleteMany({ where: { userId } });
+    return;
+  }
+
+  const projects = await prisma.project.findMany({
+    where: { status: 'open' },
+    include: { projectSkills: { include: { skill: true } } }
+  });
+
+  const threshold = await getMatchSurfacingThreshold();
+
+  for (const project of projects) {
+    const projectId = project.id;
+    const result = computeMatchScore(user, project);
+
+    if (!result) {
+      await prisma.match.deleteMany({ where: { userId, projectId } });
+      continue;
+    }
+
+    const match = await prisma.match.upsert({
+      where: { userId_projectId: { userId, projectId } },
+      update: {
+        score: result.score,
+        factorBreakdown: result.factorBreakdown as any,
+        algorithmVersion: result.algorithmVersion,
+        computedAt: new Date()
+      },
+      create: {
+        userId,
+        projectId,
+        score: result.score,
+        factorBreakdown: result.factorBreakdown as any,
+        algorithmVersion: result.algorithmVersion,
+        computedAt: new Date()
+      }
+    });
+
+    if (match.score >= threshold) {
+      const existingRec = await prisma.recommendation.findFirst({
+        where: { userId, targetType: 'project', targetId: projectId }
+      });
+      if (!existingRec) {
+        const newRec = await prisma.recommendation.create({
+          data: { userId, targetType: 'project', targetId: projectId }
+        });
+        try {
+          const notification = await createNotification(userId, 'PROJECT_MATCH', {
+            event: 'project_match_created',
+            projectId,
+            matchId: match.id,
+            recommendationId: newRec.id,
+            score: match.score
+          });
+          await enqueueNotification({
+            notificationId: notification.id,
+            userId,
+            category: 'PROJECT_MATCH',
+            payload: notification.payload
+          });
+        } catch (notifError) {
+          console.error('Failed to dispatch project_match_created notification', notifError);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Batch: recompute all available users for a given project.
+ * Fetches the project once, then iterates users in memory.
+ * Preserves all hard filters, weights, and versioning from computeMatchScore.
+ */
+export async function recomputeAllForProject(projectId: string): Promise<void> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: { projectSkills: { include: { skill: true } } }
+  });
+
+  if (!project || project.status !== 'open') {
+    // Project gone or not open — remove all stale match rows for it
+    await prisma.match.deleteMany({ where: { projectId } });
+    return;
+  }
+
+  const users = await prisma.user.findMany({
+    where: { profile: { availability: { not: 'not_looking' } } },
+    include: {
+      profile: true,
+      userSkills: { include: { skill: true } }
+    }
+  });
+
+  const threshold = await getMatchSurfacingThreshold();
+
+  for (const user of users) {
+    const userId = user.id;
+    if (!user.profile) continue;
+
+    const result = computeMatchScore(user, project);
+
+    if (!result) {
+      await prisma.match.deleteMany({ where: { userId, projectId } });
+      continue;
+    }
+
+    const match = await prisma.match.upsert({
+      where: { userId_projectId: { userId, projectId } },
+      update: {
+        score: result.score,
+        factorBreakdown: result.factorBreakdown as any,
+        algorithmVersion: result.algorithmVersion,
+        computedAt: new Date()
+      },
+      create: {
+        userId,
+        projectId,
+        score: result.score,
+        factorBreakdown: result.factorBreakdown as any,
+        algorithmVersion: result.algorithmVersion,
+        computedAt: new Date()
+      }
+    });
+
+    if (match.score >= threshold) {
+      const existingRec = await prisma.recommendation.findFirst({
+        where: { userId, targetType: 'project', targetId: projectId }
+      });
+      if (!existingRec) {
+        const newRec = await prisma.recommendation.create({
+          data: { userId, targetType: 'project', targetId: projectId }
+        });
+        try {
+          const notification = await createNotification(userId, 'PROJECT_MATCH', {
+            event: 'project_match_created',
+            projectId,
+            matchId: match.id,
+            recommendationId: newRec.id,
+            score: match.score
+          });
+          await enqueueNotification({
+            notificationId: notification.id,
+            userId,
+            category: 'PROJECT_MATCH',
+            payload: notification.payload
+          });
+        } catch (notifError) {
+          console.error('Failed to dispatch project_match_created notification', notifError);
+        }
+      }
+    }
+  }
 }

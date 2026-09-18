@@ -100,6 +100,7 @@ export async function getApplicationsForDeveloper(userId: string) {
     where: { userId },
     include: { project: true, role: true },
     orderBy: { createdAt: 'desc' },
+    take: 100,
   });
 }
 
@@ -118,6 +119,7 @@ export async function getApplicationsForProject(ownerId: string, projectId: stri
     where: { projectId },
     include: { user: { include: { profile: true } }, role: true },
     orderBy: { createdAt: 'desc' },
+    take: 100,
   });
 }
 
