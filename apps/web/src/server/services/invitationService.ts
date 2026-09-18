@@ -4,7 +4,7 @@ import { NotFoundError, ForbiddenError, ConflictError } from '../errors';
 import { InviteDeveloperInput, inviteDeveloperSchema, RespondToInvitationInput, respondToInvitationSchema } from '../../lib/validations/invitation';
 import { getAvailableInvitationActions, InvitationStatus } from '@codesync/shared-types';
 import { createNotification } from './notificationService';
-import { enqueueNotification } from '../jobs/queue';
+import { enqueueNotification } from '@codesync/core/queue';
 import { ensureWorkspace } from './workspaceService';
 
 export async function inviteDeveloper(ownerId: string, projectId: string, data: InviteDeveloperInput) {

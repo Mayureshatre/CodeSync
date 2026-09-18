@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { submitReview } from '../../apps/web/src/server/services/reviewService';
 import { prisma } from '../../apps/web/src/server/db';
 
@@ -10,7 +10,7 @@ vi.mock('../../apps/web/src/server/db', () => ({
   }
 }));
 
-vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+vi.mock('@codesync/core/queue', () => ({
   enqueueReviewVisibility: vi.fn()
 }));
 
@@ -44,7 +44,8 @@ describe('Review Service', () => {
     const review = await submitReview('proj-1', 'user-1', { revieweeId: 'user-2', rating: 4, comment: 'Good' });
     
     expect(review.id).toBe('rev-1');
-    const { enqueueReviewVisibility } = await import('../../apps/web/src/server/jobs/queue');
+    const { enqueueReviewVisibility } = await import('@codesync/core/queue');
     expect(enqueueReviewVisibility).toHaveBeenCalledWith('rev-1', 14 * 24 * 60 * 60 * 1000);
   });
 });
+

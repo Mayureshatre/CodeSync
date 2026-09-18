@@ -7,12 +7,12 @@ import {
   getPreferences, 
   updatePreference, 
   getUnreadCount 
-} from '../../apps/web/src/server/services/notificationService';
-import { prisma } from '../../apps/web/src/server/db';
-import { NotFoundError, ForbiddenError } from '../../apps/web/src/server/errors';
+} from '@codesync/core/notificationService';
+import { prisma } from '@codesync/core/db';
+import { NotFoundError, ForbiddenError } from '@codesync/core/errors';
 import { DEFAULT_PREFERENCES } from '../../apps/web/src/lib/validations/notification';
 
-vi.mock('../../apps/web/src/server/db', () => ({
+vi.mock('@codesync/core/db', () => ({
   prisma: {
     notification: {
       create: vi.fn(),
@@ -27,6 +27,10 @@ vi.mock('../../apps/web/src/server/db', () => ({
       upsert: vi.fn(),
     }
   }
+}));
+
+vi.mock('@codesync/core/queue', () => ({
+  enqueueNotification: vi.fn()
 }));
 
 describe('notificationService', () => {

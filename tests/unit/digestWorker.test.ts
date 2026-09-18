@@ -1,23 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { processDigestJob, getWeekIdentifier } from '../../worker/src/digestWorker';
-import { prisma } from '../../apps/web/src/server/db';
-import { getPreferences, createNotification } from '../../apps/web/src/server/services/notificationService';
-import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+import { prisma } from '@codesync/core/db';
+import { getPreferences, createNotification } from '@codesync/core/notificationService';
+import { enqueueNotification } from '@codesync/core/queue';
 import { Job } from 'bullmq';
 
-vi.mock('../../apps/web/src/server/db', () => ({
+vi.mock('@codesync/core/db', () => ({
   prisma: {
     recommendation: { findMany: vi.fn() },
     notification: { findMany: vi.fn(), create: vi.fn() }
   }
 }));
 
-vi.mock('../../apps/web/src/server/services/notificationService', () => ({
+vi.mock('@codesync/core/notificationService', () => ({
   getPreferences: vi.fn(),
   createNotification: vi.fn()
 }));
 
-vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+vi.mock('@codesync/core/queue', () => ({
   enqueueNotification: vi.fn()
 }));
 

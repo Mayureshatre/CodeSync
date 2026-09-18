@@ -1,20 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { processNotificationJob } from '../../worker/src/notificationWorker';
-import { getPreferences, createNotification } from '../../apps/web/src/server/services/notificationService';
-import { getEmailTransport, EmailTransport, EmailPayload } from '../../apps/web/src/server/services/emailTransport';
-import { prisma } from '../../apps/web/src/server/db';
+import { getPreferences, createNotification } from '@codesync/core/notificationService';
+import { getEmailTransport, EmailTransport, EmailPayload } from '@codesync/core/emailTransport';
+import { prisma } from '@codesync/core/db';
 import { Job } from 'bullmq';
 
-vi.mock('../../apps/web/src/server/services/notificationService', () => ({
+vi.mock('@codesync/core/notificationService', () => ({
   getPreferences: vi.fn(),
   createNotification: vi.fn(),
 }));
 
-vi.mock('../../apps/web/src/server/services/emailTransport', () => ({
+vi.mock('@codesync/core/emailTransport', () => ({
   getEmailTransport: vi.fn(),
 }));
 
-vi.mock('../../apps/web/src/server/db', () => ({
+vi.mock('@codesync/core/db', () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),

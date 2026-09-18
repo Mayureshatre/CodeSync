@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Prisma } from '@prisma/client';
 import { inviteDeveloper, getInvitationsForDeveloper, respondToInvitation } from '../../apps/web/src/server/services/invitationService';
 import { prisma } from '../../apps/web/src/server/db';
@@ -31,7 +31,7 @@ vi.mock('../../apps/web/src/server/services/notificationService', () => ({
   createNotification: vi.fn().mockResolvedValue({ id: 'notif-1', payload: {} }),
 }));
 
-vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+vi.mock('@codesync/core/queue', () => ({
   enqueueNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -40,7 +40,7 @@ vi.mock('../../apps/web/src/server/services/workspaceService', () => ({
 }));
 
 import { createNotification } from '../../apps/web/src/server/services/notificationService';
-import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+import { enqueueNotification } from '@codesync/core/queue';
 
 describe('invitationService', () => {
   beforeEach(() => {
@@ -165,3 +165,4 @@ describe('invitationService', () => {
     });
   });
 });
+

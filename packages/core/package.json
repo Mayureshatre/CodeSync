@@ -1,0 +1,37 @@
+{
+  "name": "@codesync/core",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./db": "./src/db.ts",
+    "./queue": "./src/queue.ts",
+    "./errors": "./src/errors.ts",
+    "./configService": "./src/configService.ts",
+    "./emailTransport": "./src/emailTransport.ts",
+    "./notificationTypes": "./src/notificationTypes.ts",
+    "./notificationService": "./src/notificationService.ts",
+    "./profileUtils": "./src/profileUtils.ts",
+    "./matchingService": "./src/matchingService.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@codesync/shared-types": "workspace:*",
+    "@prisma/client": "^5.22.0",
+    "bullmq": "^6.3.4",
+    "ioredis": "^6.0.0",
+    "resend": "^3.1.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@codesync/config": "workspace:*",
+    "typescript": "^5.2.2",
+    "@types/node": "^20.0.0"
+  }
+}

@@ -1,9 +1,13 @@
-﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generatePresignedAvatarUploadUrl, generatePresignedResumeUploadUrl, generatePresignedDownloadUrl, deleteObject, isValidAvatarUrl } from '../../apps/web/src/server/services/storageService';
 import { finalizeResumeUpload, getResumeDownloadUrl, deleteResume } from '../../apps/web/src/server/services/resumeService';
 import { updateProfile } from '../../apps/web/src/server/services/profileService';
 import { prisma } from '../../apps/web/src/server/db';
 import { NotFoundError, ForbiddenError } from '../../apps/web/src/server/errors';
+
+vi.mock('@codesync/core/queue', () => ({
+  enqueueMatchRecompute: vi.fn()
+}));
 
 vi.mock('../../apps/web/src/server/db', () => ({
   prisma: {

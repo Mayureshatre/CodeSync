@@ -1,9 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getProjectById, deleteProject, updateProject, publishProject } from '../../apps/web/src/server/services/projectService';
 import { prisma } from '../../apps/web/src/server/db';
 import { NotFoundError, ForbiddenError } from '../../apps/web/src/server/errors';
 import { createNotification } from '../../apps/web/src/server/services/notificationService';
-import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+import { enqueueNotification } from '@codesync/core/queue';
+
+vi.mock('@codesync/core/queue', () => ({
+  enqueueMatchRecompute: vi.fn(),
+  enqueueNotification: vi.fn().mockResolvedValue(undefined)
+}));
 
 vi.mock('../../apps/web/src/server/db', () => ({
   prisma: {
@@ -27,9 +32,6 @@ vi.mock('../../apps/web/src/server/services/notificationService', () => ({
   createNotification: vi.fn().mockResolvedValue({ id: 'notif-1', payload: {} })
 }));
 
-vi.mock('../../apps/web/src/server/jobs/queue', () => ({
-  enqueueNotification: vi.fn().mockResolvedValue(undefined)
-}));
 
 describe('projectService', () => {
   beforeEach(() => {
@@ -155,3 +157,4 @@ describe('projectService', () => {
     });
   });
 });
+

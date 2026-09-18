@@ -1,7 +1,7 @@
 import { prisma } from '../db';
 import { NotFoundError, ForbiddenError, ConflictError } from '../errors';
 import { SubmitReviewInput, submitReviewSchema } from '../../lib/validations/review';
-import { enqueueReviewVisibility } from '../jobs/queue';
+import { enqueueReviewVisibility } from '@codesync/core/queue';
 import { getReviewVisibilityWindowDays } from './configService';
 import { createNotification } from './notificationService';
 

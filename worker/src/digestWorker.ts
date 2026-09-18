@@ -1,7 +1,7 @@
 import { Worker, Job } from 'bullmq';
-import { prisma } from '../../apps/web/src/server/db';
-import { getPreferences, createNotification } from '../../apps/web/src/server/services/notificationService';
-import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+import { prisma } from '@codesync/core/db';
+import { getPreferences, createNotification } from '@codesync/core/notificationService';
+import { enqueueNotification } from '@codesync/core/queue';
 
 // Get ISO week string, e.g., "2023-W42"
 export function getWeekIdentifier(date: Date = new Date()): string {

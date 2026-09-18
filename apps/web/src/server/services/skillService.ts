@@ -1,5 +1,6 @@
-import { prisma } from '../db';
+﻿import { prisma } from '../db';
 import { NotFoundError, ConflictError } from '../errors';
+import { enqueueMatchRecompute } from '@codesync/core/queue';
 import { UserSkillInput } from '../../lib/validations/skill';
 
 export async function searchSkills(query: string) {
@@ -40,7 +41,7 @@ export async function addUserSkill(userId: string, data: UserSkillInput) {
     throw new ConflictError('You already have this skill on your profile');
   }
 
-  return prisma.userSkill.create({
+  const result = await prisma.userSkill.create({
     data: {
       userId,
       skillId: data.skillId,
@@ -49,6 +50,9 @@ export async function addUserSkill(userId: string, data: UserSkillInput) {
     },
     include: { skill: true }
   });
+
+  await enqueueMatchRecompute({ userId });
+  return result;
 }
 
 export async function updateUserSkill(userId: string, skillId: string, data: Omit<UserSkillInput, 'skillId'>) {
@@ -60,7 +64,7 @@ export async function updateUserSkill(userId: string, skillId: string, data: Omi
     throw new NotFoundError('Skill not found on your profile');
   }
 
-  return prisma.userSkill.update({
+  const result = await prisma.userSkill.update({
     where: { userId_skillId: { userId, skillId } },
     data: {
       proficiency: data.proficiency,
@@ -68,6 +72,9 @@ export async function updateUserSkill(userId: string, skillId: string, data: Omi
     },
     include: { skill: true }
   });
+
+  await enqueueMatchRecompute({ userId });
+  return result;
 }
 
 export async function removeUserSkill(userId: string, skillId: string) {
@@ -79,7 +86,12 @@ export async function removeUserSkill(userId: string, skillId: string) {
     throw new NotFoundError('Skill not found on your profile');
   }
 
-  await prisma.userSkill.delete({
+  const result = await prisma.userSkill.delete({
     where: { userId_skillId: { userId, skillId } }
   });
+
+  await enqueueMatchRecompute({ userId });
+  return result;
 }
+
+

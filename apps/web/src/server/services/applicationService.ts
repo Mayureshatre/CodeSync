@@ -4,7 +4,7 @@ import { NotFoundError, ForbiddenError, ConflictError } from '../errors';
 import { ApplyToProjectInput, applyToProjectSchema, UpdateApplicationStatusInput, updateApplicationStatusSchema } from '../../lib/validations/application';
 import { getAvailableApplicationActions, ApplicationStatus } from '@codesync/shared-types';
 import { createNotification } from './notificationService';
-import { enqueueNotification } from '../jobs/queue';
+import { enqueueNotification } from '@codesync/core/queue';
 import { ensureWorkspace } from './workspaceService';
 
 export async function applyToProject(userId: string, projectId: string, data: ApplyToProjectInput) {

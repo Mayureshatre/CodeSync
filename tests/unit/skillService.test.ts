@@ -3,6 +3,10 @@ import { addUserSkill } from '../../apps/web/src/server/services/skillService';
 import { prisma } from '../../apps/web/src/server/db';
 import { NotFoundError, ConflictError } from '../../apps/web/src/server/errors';
 
+vi.mock('@codesync/core/queue', () => ({
+  enqueueMatchRecompute: vi.fn()
+}));
+
 vi.mock('../../apps/web/src/server/db', () => ({
   prisma: {
     skill: {

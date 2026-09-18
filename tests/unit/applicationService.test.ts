@@ -29,7 +29,7 @@ vi.mock('../../apps/web/src/server/services/notificationService', () => ({
   createNotification: vi.fn().mockResolvedValue({ id: 'notif-1', payload: {} }),
 }));
 
-vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+vi.mock('@codesync/core/queue', () => ({
   enqueueNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -38,7 +38,7 @@ vi.mock('../../apps/web/src/server/services/workspaceService', () => ({
 }));
 
 import { createNotification } from '../../apps/web/src/server/services/notificationService';
-import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+import { enqueueNotification } from '@codesync/core/queue';
 
 describe('applicationService', () => {
   beforeEach(() => {

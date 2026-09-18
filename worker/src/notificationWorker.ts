@@ -1,8 +1,8 @@
 import { Worker, Job } from 'bullmq';
-import { getPreferences, createNotification } from '../../apps/web/src/server/services/notificationService';
-import { getEmailTransport } from '../../apps/web/src/server/services/emailTransport';
-import { NotificationJobPayload } from '../../apps/web/src/server/jobs/queue';
-import { prisma } from '../../apps/web/src/server/db';
+import { getPreferences, createNotification } from '@codesync/core/notificationService';
+import { getEmailTransport } from '@codesync/core/emailTransport';
+import { NotificationJobPayload } from '@codesync/core/queue';
+import { prisma } from '@codesync/core/db';
 
 export async function processNotificationJob(job: Job<NotificationJobPayload>) {
   const { notificationId, userId, category, payload } = job.data;

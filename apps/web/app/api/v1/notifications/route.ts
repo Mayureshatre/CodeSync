@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       unreadCount
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof z.ZodError || (error as any)?.name === 'ZodError') {
       return NextResponse.json({ error: 'Validation failed', details: (error as any).errors }, { status: 400 });
     }
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

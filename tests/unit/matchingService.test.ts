@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { computeMatchScore, recomputeAndPersistMatch, MATCHING_ALGORITHM_VERSION } from '../../apps/web/src/server/services/matchingService';
-import { prisma } from '../../apps/web/src/server/db';
-import { getMatchSurfacingThreshold } from '../../apps/web/src/server/services/configService';
-import { createNotification } from '../../apps/web/src/server/services/notificationService';
-import { enqueueNotification } from '../../apps/web/src/server/jobs/queue';
+import { computeMatchScore, recomputeAndPersistMatch, MATCHING_ALGORITHM_VERSION } from '@codesync/core/matchingService';
+import { prisma } from '@codesync/core/db';
+import { getMatchSurfacingThreshold } from '@codesync/core/configService';
+import { createNotification } from '@codesync/core/notificationService';
+import { enqueueNotification } from '@codesync/core/queue';
 
-vi.mock('../../apps/web/src/server/db', () => ({
+vi.mock('@codesync/core/db', () => ({
   prisma: {
     user: { findUnique: vi.fn() },
     project: { findUnique: vi.fn() },
@@ -14,15 +14,15 @@ vi.mock('../../apps/web/src/server/db', () => ({
   }
 }));
 
-vi.mock('../../apps/web/src/server/services/configService', () => ({
+vi.mock('@codesync/core/configService', () => ({
   getMatchSurfacingThreshold: vi.fn()
 }));
 
-vi.mock('../../apps/web/src/server/services/notificationService', () => ({
+vi.mock('@codesync/core/notificationService', () => ({
   createNotification: vi.fn().mockResolvedValue({ id: 'notif-1', payload: {} })
 }));
 
-vi.mock('../../apps/web/src/server/jobs/queue', () => ({
+vi.mock('@codesync/core/queue', () => ({
   enqueueNotification: vi.fn().mockResolvedValue(undefined)
 }));
 

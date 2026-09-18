@@ -1,8 +1,8 @@
 import { prisma } from '../db';
+import { enqueueMatchRecompute, enqueueNotification } from '@codesync/core/queue';
 import { NotFoundError, ForbiddenError, ConflictError } from '../errors';
 import { ProjectInput } from '../../lib/validations/project';
 import { createNotification } from './notificationService';
-import { enqueueNotification } from '../jobs/queue';
 
 function generateSlug(name: string): string {
   return name
@@ -153,6 +153,10 @@ export async function updateProject(ownerId: string, projectId: string, data: Pr
     console.error('Failed to dispatch project_updated notification', notifError);
   }
 
+  if (updatedProject.status === 'open') {
+    await enqueueMatchRecompute({ projectId });
+  }
+
   return updatedProject;
 }
 
@@ -253,3 +257,7 @@ export async function completeProject(ownerId: string, projectId: string) {
     data: { status: 'completed' }
   });
 }
+
+
+
+

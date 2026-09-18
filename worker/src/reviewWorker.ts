@@ -1,6 +1,6 @@
 import { Worker } from 'bullmq';
-import { prisma } from '../../apps/web/src/server/db';
-import { createNotification } from '../../apps/web/src/server/services/notificationService';
+import { prisma } from '@codesync/core/db';
+import { createNotification } from '@codesync/core/notificationService';
 
 export function startReviewWorker(redisUrl: string) {
   const worker = new Worker('review', async (job) => {
