@@ -84,51 +84,64 @@ export function ProfileForm() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm font-medium text-primary mb-1.5">Display Name</label>
+          <label htmlFor="displayName" className="block text-sm font-medium text-primary mb-1.5">Display Name</label>
           <input
             {...register('displayName')}
+            id="displayName"
+            aria-invalid={errors.displayName ? "true" : "false"}
+            aria-describedby={errors.displayName ? "displayName-error" : undefined}
             placeholder="Jane Doe"
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
-          {errors.displayName && <p className="mt-1.5 text-sm text-error">{errors.displayName.message}</p>}
+          {errors.displayName && <p id="displayName-error" className="mt-1.5 text-sm text-error">{errors.displayName.message}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-primary mb-1.5">Username</label>
+          <label htmlFor="username" className="block text-sm font-medium text-primary mb-1.5">Username</label>
           <input
             {...register('username')}
+            id="username"
+            aria-invalid={errors.username ? "true" : "false"}
+            aria-describedby={errors.username ? "username-error" : undefined}
             placeholder="janedoe"
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
-          {errors.username && <p className="mt-1.5 text-sm text-error">{errors.username.message}</p>}
+          {errors.username && <p id="username-error" className="mt-1.5 text-sm text-error">{errors.username.message}</p>}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-primary mb-1.5">Bio</label>
+        <label htmlFor="bio" className="block text-sm font-medium text-primary mb-1.5">Bio</label>
         <textarea
           {...register('bio')}
+          id="bio"
+          aria-invalid={errors.bio ? "true" : "false"}
+          aria-describedby={errors.bio ? "bio-error" : undefined}
           rows={4}
           placeholder="I build things for the web..."
           className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200 resize-none"
         />
-        {errors.bio && <p className="mt-1.5 text-sm text-error">{errors.bio.message}</p>}
+        {errors.bio && <p id="bio-error" className="mt-1.5 text-sm text-error">{errors.bio.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm font-medium text-primary mb-1.5">Location</label>
+          <label htmlFor="location" className="block text-sm font-medium text-primary mb-1.5">Location</label>
           <input
             {...register('location')}
+            id="location"
+            aria-invalid={errors.location ? "true" : "false"}
             placeholder="San Francisco, CA"
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-primary mb-1.5">Availability</label>
+          <label htmlFor="availability" className="block text-sm font-medium text-primary mb-1.5">Availability</label>
           <select
             {...register('availability')}
+            id="availability"
+            aria-invalid={errors.availability ? "true" : "false"}
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           >
             <option value="available">Available</option>
@@ -140,9 +153,11 @@ export function ProfileForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-primary mb-1.5">Experience Level</label>
+        <label htmlFor="experienceLevel" className="block text-sm font-medium text-primary mb-1.5">Experience Level</label>
         <select
           {...register('experienceLevel')}
+          id="experienceLevel"
+          aria-invalid={errors.experienceLevel ? "true" : "false"}
           className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
         >
           <option value="beginner">Beginner</option>
@@ -154,18 +169,23 @@ export function ProfileForm() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm font-medium text-primary mb-1.5">GitHub URL</label>
+          <label htmlFor="githubUrl" className="block text-sm font-medium text-primary mb-1.5">GitHub URL</label>
           <input
             {...register('githubUrl')}
+            id="githubUrl"
+            aria-invalid={errors.githubUrl ? "true" : "false"}
+            aria-describedby={errors.githubUrl ? "githubUrl-error" : undefined}
             placeholder="https://github.com/janedoe"
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />
-          {errors.githubUrl && <p className="mt-1.5 text-sm text-error">{errors.githubUrl.message}</p>}
+          {errors.githubUrl && <p id="githubUrl-error" className="mt-1.5 text-sm text-error">{errors.githubUrl.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-primary mb-1.5">LinkedIn URL</label>
+          <label htmlFor="linkedinUrl" className="block text-sm font-medium text-primary mb-1.5">LinkedIn URL</label>
           <input
             {...register('linkedinUrl')}
+            id="linkedinUrl"
+            aria-invalid={errors.linkedinUrl ? "true" : "false"}
             placeholder="https://linkedin.com/in/janedoe"
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
           />

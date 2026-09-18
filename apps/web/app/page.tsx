@@ -1,28 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Puzzle, Sparkles, Code2, Users, Layout, Blocks } from 'lucide-react';
+import { ArrowRight, Code2, Layout, Blocks, Puzzle, Users, Database, Sparkles } from 'lucide-react';
+import { LandingNavbar } from '../src/components/navigation/LandingNavbar';
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-primary selection:bg-accent/20">
       
-      {/* Navigation */}
-      <nav className="px-6 h-20 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-aurora-1 to-aurora-2 flex items-center justify-center shadow-elevation-low">
-            <Blocks className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight">CodeSync</span>
-        </div>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link href="/explore" className="text-secondary hover:text-primary transition-colors">Explore</Link>
-          <Link href="/projects" className="text-secondary hover:text-primary transition-colors">Projects</Link>
-          <Link href="/auth/login" className="text-secondary hover:text-primary transition-colors">Sign in</Link>
-          <Link href="/auth/signup" className="bg-primary text-background hover:opacity-90 px-5 py-2.5 rounded-lg transition-all duration-200">
-            Get Started
-          </Link>
-        </div>
-      </nav>
+      <LandingNavbar />
 
       <main className="flex-1 flex flex-col items-center">
         

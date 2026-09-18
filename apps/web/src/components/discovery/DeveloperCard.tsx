@@ -22,13 +22,14 @@ export function DeveloperCard({ developer }: DeveloperCardProps) {
             <p className="text-secondary font-medium text-sm mt-1">@{profile.username}</p>
           )}
         </div>
-        <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
-          <button 
-            onClick={() => saveDeveloper(developer.id || profile.userId)}
-            disabled={isPending}
-            className="text-muted hover:text-accent hover:bg-accent/10 p-2 -m-2 rounded-full transition-all duration-200"
-            title="Save Developer"
-          >
+          <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
+            <button 
+              onClick={() => saveDeveloper(developer.id || profile.userId)}
+              disabled={isPending}
+              className="text-muted hover:text-accent hover:bg-accent/10 min-h-[44px] min-w-[44px] flex items-center justify-center -m-2 rounded-full transition-all duration-200"
+              title="Save Developer"
+              aria-label="Save Developer"
+            >
             <BookmarkIcon className="w-5 h-5" />
           </button>
         </div>

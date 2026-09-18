@@ -58,30 +58,36 @@ export function LoginForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-primary mb-1.5">Email</label>
+            <label htmlFor="email" className="block text-sm font-medium text-primary mb-1.5">Email</label>
             <input
               {...register('email')}
+              id="email"
               type="email"
+              aria-invalid={errors.email ? "true" : "false"}
+              aria-describedby={errors.email ? "email-error" : undefined}
               placeholder="you@example.com"
               className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
             />
-            {errors.email && <p className="mt-1.5 text-sm text-error">{errors.email.message}</p>}
+            {errors.email && <p id="email-error" className="mt-1.5 text-sm text-error">{errors.email.message}</p>}
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-sm font-medium text-primary">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-primary">Password</label>
               <Link href="/auth/forgot-password" className="text-sm font-medium text-accent hover:text-accent-secondary transition-colors">
                 Forgot password?
               </Link>
             </div>
             <input
               {...register('password')}
+              id="password"
               type="password"
+              aria-invalid={errors.password ? "true" : "false"}
+              aria-describedby={errors.password ? "password-error" : undefined}
               placeholder="••••••••"
               className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
             />
-            {errors.password && <p className="mt-1.5 text-sm text-error">{errors.password.message}</p>}
+            {errors.password && <p id="password-error" className="mt-1.5 text-sm text-error">{errors.password.message}</p>}
           </div>
 
           <button

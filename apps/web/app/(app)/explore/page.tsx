@@ -227,7 +227,7 @@ export default function ExplorePage() {
               {isLoadingMyProjects ? (
                 <Loader2 className="w-4 h-4 animate-spin text-accent" />
               ) : myProjects?.length === 0 ? (
-                <span className="text-sm text-muted">You have no active projects.</span>
+                <span className="text-sm text-secondary">You have no active projects.</span>
               ) : (
                 <select
                   value={selectedProjectId}
@@ -317,7 +317,7 @@ export default function ExplorePage() {
             ) : projectsData?.pages[0]?.items.length === 0 ? (
               <div className="text-center py-20 border-2 border-dashed border-border rounded-2xl">
                 <p className="text-secondary text-lg">No projects found matching your criteria.</p>
-                <p className="text-muted mt-2">Try adjusting your filters or search terms.</p>
+                <p className="text-secondary mt-2">Try adjusting your filters or search terms.</p>
               </div>
             ) : (
               <div className="space-y-10">
@@ -356,7 +356,7 @@ export default function ExplorePage() {
             ) : developersData?.pages[0]?.items.length === 0 ? (
               <div className="text-center py-20 border-2 border-dashed border-border rounded-2xl">
                 <p className="text-secondary text-lg">No developers found matching your criteria.</p>
-                <p className="text-muted mt-2">Try adjusting your filters or search terms.</p>
+                <p className="text-secondary mt-2">Try adjusting your filters or search terms.</p>
               </div>
             ) : (
               <div className="space-y-10">

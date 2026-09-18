@@ -14,13 +14,14 @@ export function ProjectCard({ project }: ProjectCardProps) {
     <div className="bg-surface p-6 sm:p-8 rounded-2xl border border-border shadow-elevation-flat flex flex-col h-full hover:shadow-elevation-overlay hover:-translate-y-1 transition-all duration-300 relative group">
       <div className="flex justify-between items-start mb-5">
         <h2 className="text-xl font-bold tracking-tight text-primary line-clamp-2 pr-12">{project.name}</h2>
-        <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
-          <button 
-            onClick={() => saveProject(project.id)}
-            disabled={isPending}
-            className="text-muted hover:text-accent hover:bg-accent/10 p-2 -m-2 rounded-full transition-all duration-200"
-            title="Save Project"
-          >
+          <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
+            <button 
+              onClick={() => saveProject(project.id)}
+              disabled={isPending}
+              className="text-muted hover:text-accent hover:bg-accent/10 min-h-[44px] min-w-[44px] flex items-center justify-center -m-2 rounded-full transition-all duration-200"
+              title="Save Project"
+              aria-label="Save Project"
+            >
             <BookmarkIcon className="w-5 h-5" />
           </button>
         </div>
