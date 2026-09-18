@@ -4,7 +4,7 @@ import { Blocks } from 'lucide-react';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+    <main className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       
       {/* Subtle Aurora Ambient Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] opacity-20 pointer-events-none blur-[120px] rounded-full"
@@ -23,6 +23,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="relative z-10">
         {children}
       </div>
-    </div>
+    </main>
   );
 }

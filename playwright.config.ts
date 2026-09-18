@@ -18,9 +18,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'corepack pnpm dev',
+    command: 'corepack pnpm --filter web start',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    env: {
+      NEXTAUTH_SECRET: 'e2e-test-secret-key',
+      NEXTAUTH_URL: 'http://localhost:3000'
+    }
   },
 });

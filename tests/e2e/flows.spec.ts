@@ -4,7 +4,8 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-test.describe('M12 Critical Flows & Accessibility', () => {
+test.describe.serial('M12 Critical Flows & Accessibility', () => {
+  const targetProjectName = `New E2E Target Project ${Date.now()}`;
   const testEmail = `newuser_${Date.now()}@example.com`;
 
   test.afterAll(async () => {
@@ -24,21 +25,17 @@ test.describe('M12 Critical Flows & Accessibility', () => {
     // Wait for the UI to indicate successful registration or redirect
     await page.waitForURL(/.*verify.*/, { timeout: 10000 }).catch(() => {});
     
-    // Test environment DB setup: explicitly verify the email to simulate clicking the email link
-    // This removes the need for a production bypass endpoint.
-    let user = null;
-    // Retry finding the user for a few seconds since signup might take a moment
+    // Test environment DB setup: retrieve the real VerificationToken to simulate clicking the email link
+    let tokenRecord = null;
     for (let i = 0; i < 10; i++) {
-      user = await prisma.user.findUnique({ where: { email: testEmail } });
-      if (user) break;
+      tokenRecord = await prisma.verificationToken.findFirst({ where: { email: testEmail } });
+      if (tokenRecord) break;
       await new Promise(r => setTimeout(r, 1000));
     }
-    expect(user).toBeTruthy();
+    expect(tokenRecord).toBeTruthy();
 
-    await prisma.user.update({
-      where: { email: testEmail },
-      data: { emailVerifiedAt: new Date() }
-    });
+    await page.goto(`/auth/verify-email?token=${tokenRecord!.token}`);
+    await page.waitForURL(/.*login.*/, { timeout: 10000 }).catch(() => {});
 
     // Login and finish onboarding
     await page.goto('/login');
@@ -67,12 +64,12 @@ test.describe('M12 Critical Flows & Accessibility', () => {
     const a11y = await new AxeBuilder({ page }).analyze();
     expect(a11y.violations).toEqual([]);
 
-    await page.fill('input[name="title"]', 'New E2E Target Project');
+    await page.fill('input[name="title"]', targetProjectName);
     await page.fill('textarea[name="description"]', 'E2E Target Description');
     await page.click('button:has-text("Publish")');
 
     await expect(page).toHaveURL(/.*projects\/.*/);
-    await expect(page.locator('text=New E2E Target Project')).toBeVisible();
+    await expect(page.locator(`text=${targetProjectName}`)).toBeVisible();
   });
 
   test('Flow 3: Apply -> Accept -> Workspace', async ({ page, context }) => {
@@ -85,11 +82,11 @@ test.describe('M12 Critical Flows & Accessibility', () => {
     await page.goto('/explore/projects');
     
     // Search for the project created by Flow 2
-    await page.fill('input[placeholder*="Search"]', 'New E2E Target Project');
+    await page.fill('input[placeholder*="Search"]', targetProjectName);
     await page.keyboard.press('Enter');
     
     // Click on the project card
-    await page.click('text=New E2E Target Project');
+    await page.click(`text=${targetProjectName}`);
     
     // Click apply
     await page.click('button:has-text("Apply")');
@@ -108,7 +105,7 @@ test.describe('M12 Critical Flows & Accessibility', () => {
 
     // Go to project applications
     await page.goto('/projects'); // Assuming a dashboard exists
-    await page.click('text=New E2E Target Project');
+    await page.click(`text=${targetProjectName}`);
     await page.click('text=Applications');
     
     // Accept developer
@@ -134,7 +131,7 @@ test.describe('M12 Critical Flows & Accessibility', () => {
     
     await page.click('text=E2E Developer 3');
     await page.click('button:has-text("Invite")');
-    await page.selectOption('select[name="projectId"]', { label: 'New E2E Target Project' });
+    await page.selectOption('select[name="projectId"]', { label: targetProjectName });
     await page.fill('textarea[name="message"]', 'Join my project!');
     await page.click('button:has-text("Send Invitation")');
     
@@ -148,7 +145,7 @@ test.describe('M12 Critical Flows & Accessibility', () => {
     await page.click('button[type="submit"]');
 
     await page.goto('/invitations');
-    await page.click('text=New E2E Target Project');
+    await page.click(`text=${targetProjectName}`);
     await page.click('button:has-text("Accept")');
     
     // Verify Workspace
