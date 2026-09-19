@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 test.describe.serial('M12 Critical Flows & Accessibility', () => {
   const targetProjectName = `New E2E Target Project ${Date.now()}`;
   const testEmail = `newuser_${Date.now()}@example.com`;
+  const testUsername = `new_e2e_user_${Date.now()}`;
 
   test.afterAll(async () => {
     await prisma.$disconnect();
@@ -46,7 +47,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     // Expect onboarding redirect (since profile is missing)
     await expect(page).toHaveURL(/.*onboarding.*/);
     await page.fill('input[name="displayName"]', 'New E2E Verified User');
-    await page.fill('input[name="username"]', 'new_e2e_user');
+    await page.fill('input[name="username"]', testUsername);
     await page.fill('textarea[name="bio"]', 'A passionate test user');
     await page.click('button[type="submit"]');
     
@@ -65,7 +66,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     const a11y = await new AxeBuilder({ page }).analyze();
     expect(a11y.violations).toEqual([]);
 
-    await page.fill('input[name="title"]', targetProjectName);
+    await page.fill('input[name="name"]', targetProjectName);
     await page.fill('textarea[name="description"]', 'E2E Target Description');
     await page.click('button:has-text("Publish")');
 
