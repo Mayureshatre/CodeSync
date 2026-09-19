@@ -41,12 +41,12 @@ export function LoginForm() {
       setError('Invalid email or password');
     } else {
       const session = await getSession();
-      if (session?.user && (session.user as any).hasProfile === false) {
-        router.push('/onboarding');
-      } else {
-        router.push(from);
-      }
-      router.refresh();
+      const targetUrl = session?.user && (session.user as any).hasProfile === false 
+        ? '/onboarding' 
+        : from;
+      
+      // Use hard navigation to prevent race conditions with middleware
+      window.location.href = targetUrl;
     }
   };
 
