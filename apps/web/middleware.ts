@@ -6,10 +6,16 @@ export default withAuth(
     const token = req.nextauth.token;
     const isAuth = !!token;
     const isAuthPage = req.nextUrl.pathname.startsWith('/auth');
+    const hasProfile = token?.hasProfile as boolean | undefined;
+
+    // Onboarding guard: logged in, but missing profile, not already on onboarding, not an API route
+    if (isAuth && hasProfile === false && !req.nextUrl.pathname.startsWith('/onboarding') && !req.nextUrl.pathname.startsWith('/api') && !isAuthPage) {
+      return NextResponse.redirect(new URL('/onboarding', req.url));
+    }
 
     if (isAuthPage) {
       if (isAuth) {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
+        return NextResponse.redirect(new URL('/explore', req.url));
       }
       return null;
     }
@@ -50,9 +56,14 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public pages (like the landing page / and explore)
+     * - / (landing page root)
+     * - /explore (public discovery feed)
+     * - /developers/:username (public developer profiles — (public) route group)
+     * - /projects/:id exactly where :id is a cuid/uuid (public project detail).
+     *   /projects/new and /projects/:id/edit and /projects/:id/workspace remain protected.
+     * - /auth/ (auth pages handled separately by the second pattern)
      */
-    '/((?!api/v1/auth|api/auth|_next/static|_next/image|favicon.ico|auth/|explore|$).*)',
+    '/((?!api/v1/auth|api/auth|_next/static|_next/image|favicon\\.ico|auth/|explore|developers/[^/]+$|projects/c[a-z0-9]{24}$|$).*)',
     '/auth/:path*',
   ],
 };

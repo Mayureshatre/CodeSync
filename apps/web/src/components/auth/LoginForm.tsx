@@ -1,6 +1,6 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '../../lib/validations/auth';
@@ -10,23 +10,26 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-type FormData = z.infer<typeof loginSchema>;
+type LoginInput = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get('from') || '/dashboard';
+  const rawFrom = searchParams.get('from') || '';
+  // Only allow relative internal paths (starting with /) to prevent open-redirect attacks.
+  // Reject absolute URLs (http://), protocol-relative URLs (//evil.com), and empty strings.
+  const from = rawFrom.startsWith('/') && !rawFrom.startsWith('//') ? rawFrom : '/explore';
   const [error, setError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
+  } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: LoginInput) => {
     setError(null);
     const result = await signIn('credentials', {
       redirect: false,
@@ -37,7 +40,12 @@ export function LoginForm() {
     if (result?.error) {
       setError('Invalid email or password');
     } else {
-      router.push(from);
+      const session = await getSession();
+      if (session?.user && (session.user as any).hasProfile === false) {
+        router.push('/onboarding');
+      } else {
+        router.push(from);
+      }
       router.refresh();
     }
   };

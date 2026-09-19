@@ -70,7 +70,7 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user, account, trigger }) {
+    async jwt({ token, user, account }) {
       // Initial sign in
       if (account && user) {
         if (account.provider === 'credentials') {
@@ -92,11 +92,13 @@ export const authOptions: NextAuthOptions = {
         }
       }
       
-      // Enforce the generation timestamp/counter during server-side authentication
+      // Enforce the generation timestamp/counter during server-side authentication.
+      // hasProfile is always read from the DB — never from the client-supplied session payload —
+      // so a client cannot forge hasProfile=true without an actual persisted profile.
       if (token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { sessionVersion: true, role: true, status: true }
+          select: { sessionVersion: true, role: true, status: true, profile: { select: { id: true } } }
         });
         
         if (!dbUser || dbUser.sessionVersion !== token.sessionVersion || dbUser.status === 'suspended') {
@@ -104,6 +106,7 @@ export const authOptions: NextAuthOptions = {
           return { ...token, exp: 0 }; 
         }
         token.role = dbUser.role; // Keep role up to date
+        token.hasProfile = !!dbUser.profile; // Always from DB; client update() call triggers a re-read here
       }
 
       return token;
@@ -114,6 +117,7 @@ export const authOptions: NextAuthOptions = {
           ...session.user,
           id: token.id as string,
           role: token.role as string,
+          hasProfile: token.hasProfile as boolean,
         } as any;
       } else {
         // Force session to expire if token was invalidated
