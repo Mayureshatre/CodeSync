@@ -69,8 +69,7 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
       }
 
       const { project } = await res.json();
-      router.push(`/projects/${project.slug}`);
-      router.refresh();
+      window.location.href = `/projects/${project.slug}`;
     } catch (err: any) {
       setError(err.message);
     }

@@ -6,9 +6,11 @@ import { profileSchema, ProfileInput } from '../../lib/validations/profile';
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 export function ProfileForm() {
   const router = useRouter();
+  const { update } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,8 +62,8 @@ export function ProfileForm() {
         throw new Error(body.error || 'Failed to update profile');
       }
 
-      router.push('/profile');
-      router.refresh();
+      await update({ hasProfile: true });
+      window.location.href = '/profile';
     } catch (err: any) {
       setError(err.message);
     }
