@@ -63,7 +63,7 @@ export const config = {
      *   /projects/new and /projects/:id/edit and /projects/:id/workspace remain protected.
      * - /auth/ (auth pages handled separately by the second pattern)
      */
-    '/((?!api/v1/auth|api/auth|_next/static|_next/image|favicon\\.ico|auth/|explore|developers/[^/]+$|projects/c[a-z0-9]{24}$|$).*)',
+    '/((?!api/v1/auth|api/auth|api/health|_next/static|_next/image|favicon\\.ico|auth/|explore|developers/[^/]+$|projects/c[a-z0-9]{24}$|$).*)',
     '/auth/:path*',
   ],
 };
