@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "scripts": {
+    "postinstall": "prisma generate",
     "build": "corepack pnpm -r run build",
     "dev": "corepack pnpm --parallel -r run dev",
     "lint": "corepack pnpm -r run lint",

@@ -645,7 +645,7 @@ All secrets are stored in the deployment platform's secret manager (Vercel Envir
 
 ## 30. CI/CD Architecture
 
-GitHub Actions pipeline on every PR: install → typecheck → lint → unit tests → integration tests (against an ephemeral test Postgres via Docker) → build. On merge to `main`: the same pipeline, then Prisma migration deploy against staging → E2E test suite against staging → manual promotion (or automatic, per team preference) to production deploy via Vercel. Migrations are never applied automatically against production without the staging E2E pass gating them.
+GitHub Actions pipeline on every PR: install -> typecheck -> lint -> unit tests -> integration & E2E tests (against an ephemeral test Postgres via Docker) -> build. On merge to `main`: the same pipeline validates the build. Once passed, a dedicated production migration job (`production-migrate`) is explicitly gated (via GitHub environments) before being applied to the production database. Migrations are never applied automatically against production without the CI pipeline passing. Vercel automatically deploys the web app upon successful build.
 
 ---
 

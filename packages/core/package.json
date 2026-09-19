@@ -14,7 +14,8 @@
     "./notificationTypes": "./src/notificationTypes.ts",
     "./notificationService": "./src/notificationService.ts",
     "./profileUtils": "./src/profileUtils.ts",
-    "./matchingService": "./src/matchingService.ts"
+    "./matchingService": "./src/matchingService.ts",
+    "./env": "./src/env.ts"
   },
   "scripts": {
     "build": "tsc",

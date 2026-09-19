@@ -4,6 +4,9 @@ import { startDigestWorker } from './digestWorker';
 import { startReviewWorker } from './reviewWorker';
 import { scheduleWeeklyDigest } from '@codesync/core/queue';
 import { recomputeAndPersistMatch, recomputeAllForUser, recomputeAllForProject } from '@codesync/core/matchingService';
+import { validateEnv } from '@codesync/core/env';
+
+validateEnv();
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
