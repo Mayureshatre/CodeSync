@@ -62,6 +62,8 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
 
+    await expect(page).toHaveURL(/.*explore.*/);
+
     await page.goto('/projects/new');
     const a11y = await new AxeBuilder({ page }).analyze();
     expect(a11y.violations).toEqual([]);
@@ -80,6 +82,8 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     await page.fill('input[name="email"]', 'e2e2@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
+
+    await expect(page).toHaveURL(/.*explore.*/);
 
     await page.goto('/explore/projects');
     
@@ -105,6 +109,8 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
 
+    await expect(page).toHaveURL(/.*explore.*/);
+
     // Go to project applications
     await page.goto('/projects'); // Assuming a dashboard exists
     await page.click(`text=${targetProjectName}`);
@@ -127,6 +133,8 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
 
+    await expect(page).toHaveURL(/.*explore.*/);
+
     await page.goto('/explore/developers');
     await page.fill('input[placeholder*="Search"]', 'E2E Developer 3');
     await page.keyboard.press('Enter');
@@ -146,6 +154,8 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
 
+    await expect(page).toHaveURL(/.*explore.*/);
+
     await page.goto('/invitations');
     await page.click(`text=${targetProjectName}`);
     await page.click('button:has-text("Accept")');
@@ -160,6 +170,8 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     await page.fill('input[name="email"]', 'e2e1@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
+
+    await expect(page).toHaveURL(/.*explore.*/);
 
     await page.goto('/explore/developers');
     await page.click('text=E2E Developer 3');
@@ -177,6 +189,8 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     await page.fill('input[name="email"]', 'admin@example.com');
     await page.fill('input[name="password"]', 'Password123!');
     await page.click('button[type="submit"]');
+
+    await expect(page).toHaveURL(/.*explore.*/);
 
     await page.goto('/admin/reports');
     
