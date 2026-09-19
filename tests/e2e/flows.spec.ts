@@ -46,6 +46,7 @@ test.describe.serial('M12 Critical Flows & Accessibility', () => {
     // Expect onboarding redirect (since profile is missing)
     await expect(page).toHaveURL(/.*onboarding.*/);
     await page.fill('input[name="displayName"]', 'New E2E Verified User');
+    await page.fill('input[name="username"]', 'new_e2e_user');
     await page.fill('textarea[name="bio"]', 'A passionate test user');
     await page.click('button[type="submit"]');
     
