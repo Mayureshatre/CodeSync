@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getProjectById, deleteProject, updateProject, publishProject } from '../../apps/web/src/server/services/projectService';
 import { prisma } from '../../apps/web/src/server/db';
 import { NotFoundError, ForbiddenError } from '../../apps/web/src/server/errors';
@@ -90,11 +90,16 @@ describe('projectService', () => {
     it('publishes project if user verified', async () => {
       vi.mocked(prisma.project.findUnique).mockResolvedValue({ ownerId: 'owner1' } as any);
       vi.mocked(prisma.user.findUnique).mockResolvedValue({ emailVerifiedAt: new Date() } as any);
+      const mockUpdated = { id: 'p1', status: 'open' };
+      vi.mocked(prisma.project.update).mockResolvedValue(mockUpdated as any);
+
+      const { enqueueMatchRecompute } = await import('@codesync/core/queue');
       await publishProject('owner1', 'p1');
       expect(prisma.project.update).toHaveBeenCalledWith({
         where: { id: 'p1' },
-        data: { status: 'open', publishedAt: expect.any(Date) }
+        data: { status: 'open' }
       });
+      expect(enqueueMatchRecompute).toHaveBeenCalledWith({ projectId: 'p1' });
     });
   });
 
@@ -119,7 +124,7 @@ describe('projectService', () => {
 
       // Core update happens
       expect(prisma.project.update).toHaveBeenCalled();
-      
+
       // Member lookup happens
       expect(prisma.projectMember.findMany).toHaveBeenCalledWith({
         where: { projectId: 'p1', status: 'active' }
@@ -146,11 +151,11 @@ describe('projectService', () => {
       vi.mocked(prisma.projectMember.findMany).mockResolvedValue([
         { userId: 'member1', status: 'active' }
       ] as any);
-      
+
       vi.mocked(createNotification).mockRejectedValueOnce(new Error('Redis is down'));
 
       const result = await updateProject('owner1', 'p1', defaultData);
-      
+
       // Update still successful
       expect(result.id).toBe('p1');
       expect(prisma.project.update).toHaveBeenCalled();

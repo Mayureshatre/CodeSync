@@ -186,13 +186,16 @@ export async function publishProject(ownerId: string, projectId: string) {
     throw new ForbiddenError('Email must be verified before publishing a project');
   }
 
-  return prisma.project.update({
+  const updatedProject = await prisma.project.update({
     where: { id: projectId },
     data: { 
       status: 'open',
-      publishedAt: new Date()
     }
   });
+
+  await enqueueMatchRecompute({ projectId });
+
+  return updatedProject;
 }
 
 export async function getProjectBySlug(slug: string, actorId?: string) {
