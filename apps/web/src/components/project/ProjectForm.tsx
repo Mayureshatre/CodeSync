@@ -80,7 +80,7 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full max-w-3xl mx-auto bg-surface p-8 sm:p-10 rounded-2xl border border-border shadow-elevation-overlay">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-primary mb-2">{projectId ? 'Edit Workspace' : 'Create a Workspace'}</h2>
+        <h1 className="text-3xl font-bold tracking-tight text-primary mb-2">{projectId ? 'Edit Workspace' : 'Create a Workspace'}</h1>
         <p className="text-sm text-secondary">Define your project details, required skills, and team roles.</p>
         
         {error && (
@@ -123,8 +123,9 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
             {errors.category && <p className="text-error text-sm mt-1.5">{(errors.category?.message as string)}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-primary mb-1.5">Target Team Size</label>
+            <label htmlFor="teamSizeTarget" className="block text-sm font-medium text-primary mb-1.5">Target Team Size</label>
             <input 
+              id="teamSizeTarget"
               type="number" 
               {...register('teamSizeTarget', { valueAsNumber: true })} 
               className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200 shadow-elevation-flat" 
@@ -212,7 +213,7 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
           </div>
         ) : (
           <div className="w-full py-6 text-center border-2 border-dashed border-border rounded-xl">
-            <p className="text-muted text-sm">No skills added yet.</p>
+            <p className="text-secondary text-sm">No skills added yet.</p>
           </div>
         )}
       </div>
@@ -266,7 +267,7 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
           </div>
         ) : (
           <div className="w-full py-6 text-center border-2 border-dashed border-border rounded-xl">
-            <p className="text-muted text-sm">No specific roles defined.</p>
+            <p className="text-secondary text-sm">No specific roles defined.</p>
           </div>
         )}
       </div>

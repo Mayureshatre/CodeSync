@@ -145,7 +145,7 @@ export function computeMatchScore(user: any, project: any): MatchResult | null {
   };
 }
 
-function generateExplanation(breakdown: MatchFactorBreakdown, score: number): string {
+export function generateExplanation(breakdown: MatchFactorBreakdown, score: number): string {
   const parts = [];
   if (breakdown.skills >= 80) parts.push('Excellent skill alignment');
   else if (breakdown.skills >= 50) parts.push('Moderate skill alignment');

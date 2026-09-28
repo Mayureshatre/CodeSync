@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRealtimeConversation, Message } from '../../apps/web/src/hooks/useMessaging';
 import { QueryClientProvider, QueryClient } from '../../apps/web/src/lib/queryClientHelper';
@@ -160,3 +161,4 @@ describe('useRealtimeConversation', () => {
     expect(cachedData.pages[0].items).toHaveLength(1); // Still 1
   });
 });
+

@@ -1,6 +1,7 @@
 import { prisma } from '../db';
 import { Prisma } from '@prisma/client';
 import { DeveloperSearchInput, ProjectSearchInput, developerSearchSchema, projectSearchSchema } from '../../lib/validations/discovery';
+import { generateExplanation } from '@codesync/core/matchingService';
 
 function buildTsQuery(q: string) {
   // Convert basic search strings into valid tsquery by joining with &
@@ -90,7 +91,7 @@ export async function searchProjects(userId: string | null, input: ProjectSearch
     SELECT 
       p.*,
       m.score as "matchScore",
-      m.explanation as "matchExplanation",
+      m."factorBreakdown",
       u.username as "ownerUsername"
     FROM "Project" p
     JOIN "User" u ON p."ownerId" = u.id
@@ -100,7 +101,11 @@ export async function searchProjects(userId: string | null, input: ProjectSearch
     LIMIT ${limit + 1}
   `;
 
-  const results = await prisma.$queryRaw<any[]>(query);
+  const rawResults = await prisma.$queryRaw<any[]>(query);
+  const results = rawResults.map(row => ({
+    ...row,
+    matchExplanation: row.factorBreakdown && row.matchScore !== null ? generateExplanation(row.factorBreakdown, row.matchScore) : null
+  }));
 
   let nextCursor: string | undefined = undefined;
   if (results.length > limit) {
@@ -196,7 +201,7 @@ export async function searchDevelopers(currentUserId: string | null, input: Deve
         u.id as "userId",
         u."createdAt",
         m.score as "matchScore",
-        m.explanation as "matchExplanation"
+        m."factorBreakdown"
       FROM "Profile" p
       JOIN "User" u ON p."userId" = u.id
       LEFT JOIN "Match" m ON m."userId" = u.id AND m."projectId" = ${projectId}
@@ -218,7 +223,11 @@ export async function searchDevelopers(currentUserId: string | null, input: Deve
     `;
   }
 
-  const results = await prisma.$queryRaw<any[]>(query);
+  const rawResults = await prisma.$queryRaw<any[]>(query);
+  const results = rawResults.map(row => ({
+    ...row,
+    matchExplanation: row.factorBreakdown && row.matchScore !== null ? generateExplanation(row.factorBreakdown, row.matchScore) : null
+  }));
 
   let nextCursor: string | undefined = undefined;
   if (results.length > limit) {

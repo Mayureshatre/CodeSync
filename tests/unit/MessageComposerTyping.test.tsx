@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MessageComposer } from '../../apps/web/src/components/messaging/MessageComposer';
@@ -57,3 +58,4 @@ describe('MessageComposer Typing Logic', () => {
     expect(mockOnTyping).toHaveBeenCalledWith(false);
   });
 });
+

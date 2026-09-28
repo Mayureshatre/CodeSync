@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRealtimeConversation } from '../../apps/web/src/hooks/useMessaging';
 import { QueryClientProvider, QueryClient } from '../../apps/web/src/lib/queryClientHelper';
@@ -148,4 +149,5 @@ describe('useRealtimeConversation Typing Indicators', () => {
     expect(queryClient.getQueryData(['typing', 'conv-123'])).toBeUndefined();
   });
 });
+
 
