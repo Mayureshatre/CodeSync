@@ -92,9 +92,10 @@ export async function searchProjects(userId: string | null, input: ProjectSearch
       p.*,
       m.score as "matchScore",
       m."factorBreakdown",
-      u.username as "ownerUsername"
+      prof.username as "ownerUsername"
     FROM "Project" p
     JOIN "User" u ON p."ownerId" = u.id
+    JOIN "Profile" prof ON prof."userId" = u.id
     LEFT JOIN "Match" m ON m."projectId" = p.id AND m."userId" = ${userId ?? ''}
     ${whereClause}
     ORDER BY ${orderBy}, p.id DESC
