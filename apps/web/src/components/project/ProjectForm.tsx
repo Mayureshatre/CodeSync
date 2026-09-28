@@ -92,8 +92,9 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-primary mb-1.5">Project Name</label>
+          <label htmlFor="projectName" className="block text-sm font-medium text-primary mb-1.5">Project Name</label>
           <input 
+            id="projectName"
             {...register('name')} 
             placeholder="e.g. CodeSync Platform"
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200 shadow-elevation-flat" 
@@ -102,8 +103,9 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-primary mb-1.5">Description</label>
+          <label htmlFor="projectDescription" className="block text-sm font-medium text-primary mb-1.5">Description</label>
           <textarea 
+            id="projectDescription"
             {...register('description')} 
             rows={4} 
             placeholder="Describe what you are building and why..."
@@ -114,8 +116,9 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-primary mb-1.5">Category</label>
+            <label htmlFor="projectCategory" className="block text-sm font-medium text-primary mb-1.5">Category</label>
             <input 
+              id="projectCategory"
               {...register('category')} 
               placeholder="e.g. Developer Tools"
               className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200 shadow-elevation-flat" 
@@ -155,13 +158,14 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
 
       <div className="border-t border-border pt-8">
         <div className="mb-6">
-          <h3 className="text-xl font-bold tracking-tight text-primary mb-1">Project Skills</h3>
+          <h2 className="text-xl font-bold tracking-tight text-primary mb-1">Project Skills</h2>
           <p className="text-sm text-secondary">List the core technologies required for this project.</p>
         </div>
         
         <div className="relative mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
+            aria-label="Search and add skills"
             type="text"
             value={skillSearchQuery}
             onChange={(e) => setSkillSearchQuery(e.target.value)}
@@ -221,7 +225,7 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
       <div className="border-t border-border pt-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-xl font-bold tracking-tight text-primary mb-1">Roles</h3>
+            <h2 className="text-xl font-bold tracking-tight text-primary mb-1">Roles</h2>
             <p className="text-sm text-secondary">Define the positions you are hiring for.</p>
           </div>
           <button
