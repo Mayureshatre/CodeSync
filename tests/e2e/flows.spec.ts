@@ -74,9 +74,13 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
 
     await page.fill('input[name="name"]', targetProjectName);
     await page.fill('textarea[name="description"]', "E2E Target Description");
+    await page.fill('input[name="category"]', "Developer Tools");
+    await page.fill('input[name="teamSizeTarget"]', "3");
+    await page.check('input[value="open_source"]');
     await page.click('button:has-text("Create Workspace")');
 
-    await expect(page).toHaveURL(/.*projects\/.*/);
+    await expect(page).not.toHaveURL(/.*projects\/new/);
+    await expect(page).toHaveURL(/.*projects\/.+/);
     await expect(page.locator(`text=${targetProjectName}`)).toBeVisible();
   });
 
