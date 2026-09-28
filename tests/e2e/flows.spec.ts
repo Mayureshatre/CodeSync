@@ -82,6 +82,13 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
     await expect(page).not.toHaveURL(/.*\/projects\/new$/);
     await expect(page).toHaveURL(/.*projects\/.+/);
     await expect(page.locator(`text=${targetProjectName}`)).toBeVisible();
+
+    const publishBtn = page.locator('button:has-text("Publish")');
+    await expect(publishBtn).toBeVisible();
+    await publishBtn.click();
+    await expect(publishBtn).toBeHidden();
+
+    await expect(page.locator('span', { hasText: /^open$/i }).first()).toBeVisible();
   });
 
   test("Flow 3: Apply -> Accept -> Workspace", async ({ page, context }) => {
