@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Calendar, Users, MapPin, Globe, CheckCircle2 } from 'lucide-react';
+import { PublishButton } from './PublishButton';
 
 export function ProjectView({ project, isOwner }: { project: any, isOwner: boolean }) {
   if (!project) return (
@@ -39,9 +40,7 @@ export function ProjectView({ project, isOwner }: { project: any, isOwner: boole
                 Edit Workspace
               </Link>
               {project.status === 'draft' && (
-                <button className="flex-1 sm:flex-none px-5 py-2.5 bg-accent hover:opacity-90 active:scale-[0.98] text-white font-medium rounded-xl transition-all duration-200 shadow-elevation-low">
-                  Publish
-                </button>
+                <PublishButton projectId={project.id} />
               )}
             </div>
           )}

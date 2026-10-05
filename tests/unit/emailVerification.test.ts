@@ -1,9 +1,14 @@
-﻿import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { generateVerificationToken, verifyEmailToken, registerUser, resendVerificationEmail } from '../../apps/web/src/server/services/authService';
 import { prisma } from '../../apps/web/src/server/db';
 import { AuthenticationError } from '../../apps/web/src/server/errors';
 import { getEmailTransport, ExternalEmailTransport, ConsoleEmailTransport } from '../../apps/web/src/server/services/emailTransport';
 import { publishProject } from '../../apps/web/src/server/services/projectService';
+
+vi.mock('@codesync/core/queue', () => ({
+  enqueueMatchRecompute: vi.fn(),
+  enqueueNotification: vi.fn()
+}));
 
 vi.mock('../../apps/web/src/server/services/emailTransport', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../apps/web/src/server/services/emailTransport')>();
