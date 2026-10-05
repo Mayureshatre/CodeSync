@@ -193,7 +193,11 @@ export async function publishProject(ownerId: string, projectId: string) {
     }
   });
 
-  await enqueueMatchRecompute({ projectId });
+  try {
+    await enqueueMatchRecompute({ projectId });
+  } catch (error) {
+    console.error('Non-fatal: Failed to enqueue match recompute', error);
+  }
 
   return updatedProject;
 }
