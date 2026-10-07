@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getCurrentSession } from '@/src/lib/auth';
 import { saveSearch, getSavedSearches } from '@/src/server/services/savedItemService';
 import { DomainError } from '@/src/server/errors';
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getCurrentSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
     }
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getCurrentSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
     }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getCurrentSession } from '@/src/lib/auth';
 import { getInvitationsForDeveloper } from '../../../../src/server/services/invitationService';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getCurrentSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
     }
