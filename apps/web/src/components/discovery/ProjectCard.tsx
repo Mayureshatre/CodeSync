@@ -15,7 +15,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
   return (
     <div className="bg-surface p-6 sm:p-8 rounded-2xl border border-border shadow-elevation-flat flex flex-col h-full hover:shadow-elevation-overlay hover:-translate-y-1 transition-all duration-300 relative group">
       <div className="flex justify-between items-start mb-5">
-        <h2 className="text-xl font-bold tracking-tight text-primary line-clamp-2 pr-12">{project.name}</h2>
+        <Link href={`/projects/${project.slug}`} className="hover:underline">
+          <h2 className="text-xl font-bold tracking-tight text-primary line-clamp-2 pr-12">{project.name}</h2>
+        </Link>
           <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
             <button 
               onClick={() => saveProject(project.id)}
@@ -58,7 +60,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         )}
       </div>
       
-      <Link href={`/projects/${project.id}`} className="block w-full text-center py-2.5 bg-background hover:border-accent hover:text-accent text-primary rounded-xl transition-all duration-200 mt-auto font-medium border border-border shadow-elevation-low group-hover:bg-surface-elevated">
+      <Link href={`/projects/${project.slug}`} className="block w-full text-center py-2.5 bg-background hover:border-accent hover:text-accent text-primary rounded-xl transition-all duration-200 mt-auto font-medium border border-border shadow-elevation-low group-hover:bg-surface-elevated">
         View Project
       </Link>
     </div>

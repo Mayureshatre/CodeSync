@@ -17,12 +17,14 @@ export function DeveloperCard({ developer }: DeveloperCardProps) {
     <div className="bg-surface p-6 sm:p-8 rounded-2xl border border-border shadow-elevation-flat flex flex-col h-full hover:shadow-elevation-overlay hover:-translate-y-1 transition-all duration-300 relative group">
       <div className="flex justify-between items-start mb-5">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-primary pr-12 line-clamp-1">{profile.displayName || profile.username || 'Developer'}</h2>
-          {profile.title ? (
-            <p className="text-accent font-medium text-sm mt-1">{profile.title}</p>
-          ) : (
-            <p className="text-secondary font-medium text-sm mt-1">@{profile.username}</p>
-          )}
+          <Link href={`/developers/${profile.username}`} className="hover:underline">
+            <h2 className="text-xl font-bold tracking-tight text-primary pr-12 line-clamp-1">{profile.displayName || profile.username || 'Developer'}</h2>
+            {profile.title ? (
+              <p className="text-accent font-medium text-sm mt-1">{profile.title}</p>
+            ) : (
+              <p className="text-secondary font-medium text-sm mt-1">@{profile.username}</p>
+            )}
+          </Link>
         </div>
           <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
             <button 
@@ -60,7 +62,7 @@ export function DeveloperCard({ developer }: DeveloperCardProps) {
         )}
       </div>
       
-      <Link href={`/developers/${developer.id || profile.userId}`} className="block w-full text-center py-2.5 bg-background hover:border-accent hover:text-accent text-primary rounded-xl transition-all duration-200 mt-auto font-medium border border-border shadow-elevation-low group-hover:bg-surface-elevated">
+      <Link href={`/developers/${profile.username}`} className="block w-full text-center py-2.5 bg-background hover:border-accent hover:text-accent text-primary rounded-xl transition-all duration-200 mt-auto font-medium border border-border shadow-elevation-low group-hover:bg-surface-elevated">
         View Profile
       </Link>
     </div>
