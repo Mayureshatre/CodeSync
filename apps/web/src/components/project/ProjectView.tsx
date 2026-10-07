@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Calendar, Users, MapPin, Globe, CheckCircle2 } from 'lucide-react';
 import { PublishButton } from './PublishButton';
+import { ApplyButton } from './ApplyModal';
 
 export function ProjectView({ project, isOwner }: { project: any, isOwner: boolean }) {
   if (!project) return (
@@ -42,6 +43,11 @@ export function ProjectView({ project, isOwner }: { project: any, isOwner: boole
               {project.status === 'draft' && (
                 <PublishButton projectId={project.id} />
               )}
+            </div>
+          )}
+          {!isOwner && project.status === 'open' && (
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <ApplyButton projectId={project.id} variant="primary" />
             </div>
           )}
         </div>
@@ -101,9 +107,7 @@ export function ProjectView({ project, isOwner }: { project: any, isOwner: boole
                       {role.slotsAvailable} slot{role.slotsAvailable !== 1 ? 's' : ''}
                     </span>
                     {!isOwner && (
-                      <button className="px-4 py-2 min-h-[44px] bg-surface border border-border text-primary text-sm font-medium rounded-lg hover:border-accent hover:text-accent transition-all">
-                        Apply
-                      </button>
+                      <ApplyButton projectId={project.id} roleId={role.id} roleTitle={role.title} variant="secondary" />
                     )}
                   </div>
                 </div>
