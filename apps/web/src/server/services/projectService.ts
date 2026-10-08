@@ -244,7 +244,6 @@ export async function getProjectById(id: string, actorId?: string) {
 export async function getProjectsByOwner(ownerId: string) {
   return prisma.project.findMany({
     where: { ownerId },
-    select: { id: true, name: true, status: true },
     orderBy: { createdAt: 'desc' },
     take: 100,
   });

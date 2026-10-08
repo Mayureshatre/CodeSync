@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Calendar, Users, MapPin, Globe, CheckCircle2 } from 'lucide-react';
 import { PublishButton } from './PublishButton';
 import { ApplyButton } from './ApplyModal';
+import { ApplicationList } from './ApplicationList';
 
 export function ProjectView({ project, isOwner }: { project: any, isOwner: boolean }) {
   if (!project) return (
@@ -120,6 +121,14 @@ export function ProjectView({ project, isOwner }: { project: any, isOwner: boole
             </div>
           </div>
         </div>
+
+        {/* Applications (Owner Only) */}
+
+        {isOwner && (
+
+          <ApplicationList projectId={project.id} />
+
+        )}
 
         {/* Sidebar */}
         <div className="space-y-8">
