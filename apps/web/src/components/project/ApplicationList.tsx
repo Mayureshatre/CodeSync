@@ -11,7 +11,7 @@ interface Application {
     id: string;
     title: string;
   };
-  applicant: {
+  user: {
     id: string;
     email: string;
     profile?: {
@@ -96,15 +96,15 @@ export function ApplicationList({ projectId }: { projectId: string }) {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 text-accent">
-                {app.applicant.profile?.avatarUrl ? (
-                  <img src={app.applicant.profile.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                {app.user.profile?.avatarUrl ? (
+                  <img src={app.user.profile.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
                 ) : (
                   <User className="w-5 h-5" />
                 )}
               </div>
               <div>
                 <p className="font-semibold text-primary">
-                  {app.applicant.profile?.displayName || app.applicant.email}
+                  {app.user.profile?.displayName || app.user.email}
                 </p>
                 <div className="flex items-center gap-2 text-sm text-secondary mt-0.5">
                   <span className="capitalize">{app.status}</span>
