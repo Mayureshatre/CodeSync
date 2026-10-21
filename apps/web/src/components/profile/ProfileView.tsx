@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { InviteButton } from './InviteModal';
+import { ReportButton } from './ReportModal';
 
 export function ProfileView({ profile, isOwner }: { profile: any, isOwner: boolean }) {
   if (!profile) return <div className="text-primary text-center py-12">Profile not found.</div>;
@@ -39,6 +40,11 @@ export function ProfileView({ profile, isOwner }: { profile: any, isOwner: boole
               <InviteButton
                 developerUserId={profile.userId || profile.user?.id || profile.id}
                 developerName={profile.displayName || profile.username}
+              />
+              <ReportButton
+                targetType="user"
+                targetId={profile.userId || profile.user?.id || profile.id}
+                targetName={profile.displayName || profile.username}
               />
             </div>
           )}

@@ -188,7 +188,8 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
     await page.click('button:has-text("Accept")');
 
     // Verify Workspace
-    await expect(page.locator("text=Workspace")).toBeVisible();
+    const targetInvitation = page.locator(".bg-surface", { hasText: targetProjectName });
+    await expect(targetInvitation.getByRole("link", { name: "Workspace" })).toBeVisible();
   });
 
   test("Flow 5: Report -> Admin Resolution + A11y", async ({

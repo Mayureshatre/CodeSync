@@ -8,7 +8,9 @@ export default function ReportsPage() {
   const queryClient = useQueryClient();
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [notes, setNotes] = useState('');
-  
+  const [status, setStatus] = useState<'actioned' | 'dismissed'>('actioned');
+  const [lastResolvedStatus, setLastResolvedStatus] = useState<string | null>(null);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-reports'],
     queryFn: async () => {
@@ -31,10 +33,12 @@ export default function ReportsPage() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
+      setLastResolvedStatus(variables.status);
       setSelectedReport(null);
       setNotes('');
+      setStatus('actioned');
     }
   });
 
@@ -62,7 +66,24 @@ export default function ReportsPage() {
         <h1 className="text-3xl font-bold tracking-tight text-primary">Reports Queue</h1>
         <p className="text-secondary mt-2">Review and resolve user-submitted moderation reports.</p>
       </div>
-      
+
+      {lastResolvedStatus && (
+        <div className="bg-success/10 border border-success/20 text-success px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckIcon className="w-4 h-4" />
+            <span>Report resolved as <strong className="font-semibold">{lastResolvedStatus}</strong></span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setLastResolvedStatus(null)}
+            className="text-success hover:opacity-80 p-1"
+            aria-label="Dismiss message"
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="bg-surface border border-border rounded-2xl shadow-elevation-flat overflow-hidden">
         {reports.length === 0 ? (
           <div className="p-16 text-center text-secondary flex flex-col items-center">
@@ -97,9 +118,13 @@ export default function ReportsPage() {
                       <div className="text-sm text-secondary">{r.reporter.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
-                        onClick={() => setSelectedReport(r)} 
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-accent hover:bg-accent/10 border border-transparent hover:border-accent/20 transition-colors"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedReport(r);
+                          setLastResolvedStatus(null);
+                        }}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-accent hover:bg-accent/10 border border-transparent hover:border-accent/20 transition-colors min-h-[44px]"
                       >
                         Resolve
                       </button>
@@ -113,72 +138,106 @@ export default function ReportsPage() {
       </div>
 
       {selectedReport && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="resolve-report-title"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
           <div className="bg-surface border border-border shadow-elevation-overlay rounded-2xl max-w-lg w-full overflow-hidden">
             <div className="px-6 py-5 border-b border-border flex items-center justify-between">
-              <h2 className="text-xl font-bold text-primary">Resolve Report</h2>
-              <button 
+              <h2 id="resolve-report-title" className="text-xl font-bold text-primary">Resolve Report</h2>
+              <button
+                type="button"
                 onClick={() => setSelectedReport(null)}
-                className="p-2 text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface-elevated"
+                className="p-2 text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface-elevated min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Close dialog"
               >
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
-            
-            <div className="p-6 space-y-4">
-              <div className="p-4 bg-surface-elevated rounded-xl border border-border space-y-2">
-                <p className="text-sm">
-                  <span className="text-muted font-medium">Target:</span>{' '}
-                  <span className="text-primary capitalize">{selectedReport.targetType}</span>{' '}
-                  <span className="text-muted font-mono text-xs">({selectedReport.targetId})</span>
-                </p>
-                <p className="text-sm">
-                  <span className="text-muted font-medium">Reason:</span>{' '}
-                  <span className="text-primary">{selectedReport.reason}</span>
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-secondary mb-1.5">Resolution Notes (Required)</label>
-                <textarea
-                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none shadow-elevation-flat"
-                  rows={4}
-                  placeholder="Explain the action taken..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </div>
-              
-              {resolveMutation.error && (
-                <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm font-medium">
-                  {(resolveMutation.error as Error).message}
-                </div>
-              )}
-            </div>
 
-            <div className="px-6 py-5 bg-surface-elevated/50 border-t border-border flex items-center justify-end gap-3">
-              <button 
-                onClick={() => setSelectedReport(null)} 
-                className="px-4 py-2 text-sm font-medium text-secondary hover:text-primary transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => resolveMutation.mutate({ id: selectedReport.id, status: 'dismissed', notes })}
-                disabled={!notes.trim() || resolveMutation.isPending}
-                className="px-4 py-2 text-sm font-medium bg-surface-elevated text-primary border border-border hover:border-muted rounded-xl shadow-elevation-low transition-all disabled:opacity-50"
-              >
-                Dismiss Report
-              </button>
-              <button 
-                onClick={() => resolveMutation.mutate({ id: selectedReport.id, status: 'actioned', notes })}
-                disabled={!notes.trim() || resolveMutation.isPending}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-accent text-white rounded-xl shadow-elevation-low hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
-              >
-                <CheckIcon className="w-4 h-4" />
-                Mark Actioned
-              </button>
-            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!selectedReport || !notes.trim()) return;
+                resolveMutation.mutate({ id: selectedReport.id, status, notes });
+              }}
+            >
+              <div className="p-6 space-y-4">
+                <div className="p-4 bg-surface-elevated rounded-xl border border-border space-y-2">
+                  <p className="text-sm">
+                    <span className="text-muted font-medium">Target:</span>{' '}
+                    <span className="text-primary capitalize">{selectedReport.targetType}</span>{' '}
+                    <span className="text-muted font-mono text-xs">({selectedReport.targetId})</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-muted font-medium">Reason:</span>{' '}
+                    <span className="text-primary">{selectedReport.reason}</span>
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="status" className="block text-sm font-medium text-secondary mb-1.5">
+                    Resolution Status <span className="text-error">*</span>
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as 'actioned' | 'dismissed')}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-elevation-flat"
+                  >
+                    <option value="actioned">actioned</option>
+                    <option value="dismissed">dismissed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="resolutionNotes" className="block text-sm font-medium text-secondary mb-1.5">
+                    Resolution Notes (Required) <span className="text-error">*</span>
+                  </label>
+                  <textarea
+                    id="resolutionNotes"
+                    name="resolutionNotes"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none shadow-elevation-flat"
+                    rows={4}
+                    placeholder="Explain the action taken..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {resolveMutation.error && (
+                  <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm font-medium">
+                    {(resolveMutation.error as Error).message}
+                  </div>
+                )}
+              </div>
+
+              <div className="px-6 py-5 bg-surface-elevated/50 border-t border-border flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedReport(null)}
+                  className="px-4 py-2 text-sm font-medium text-secondary hover:text-primary transition-colors min-h-[44px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!notes.trim() || resolveMutation.isPending}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-accent text-white rounded-xl shadow-elevation-low hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 min-h-[44px]"
+                >
+                  {resolveMutation.isPending ? (
+                    <Loader2Icon className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckIcon className="w-4 h-4" />
+                  )}
+                  Confirm Resolution
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
