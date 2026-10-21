@@ -196,6 +196,18 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
     page,
     context,
   }) => {
+    // Ensure test-data isolation and cleanup for retry determinism
+    const reporter = await prisma.user.findUnique({ where: { email: "e2e1@example.com" } });
+    const target = await prisma.user.findUnique({ where: { email: "e2e3@example.com" } });
+    if (reporter && target) {
+      await prisma.report.deleteMany({
+        where: {
+          reporterId: reporter.id,
+          targetId: target.id,
+        },
+      });
+    }
+
     // User reports something
     await page.goto("/auth/login");
     await page.fill('input[name="email"]', "e2e1@example.com");

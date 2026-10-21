@@ -88,7 +88,7 @@ export default function ReportsPage() {
         {reports.length === 0 ? (
           <div className="p-16 text-center text-secondary flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mb-4">
-              <ShieldAlertIcon className="w-8 h-8 text-muted" />
+              <ShieldAlertIcon className="w-8 h-8 text-secondary" />
             </div>
             <p className="text-lg font-medium text-primary mb-1">Queue is empty</p>
             <p className="text-sm">There are no open reports at this time.</p>
@@ -98,10 +98,10 @@ export default function ReportsPage() {
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-surface-elevated/50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider">Target</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider">Reason</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted uppercase tracking-wider">Reporter</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-muted uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-secondary uppercase tracking-wider">Target</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-secondary uppercase tracking-wider">Reason</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-secondary uppercase tracking-wider">Reporter</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-secondary uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -109,7 +109,7 @@ export default function ReportsPage() {
                   <tr key={r.id} className="hover:bg-surface-elevated/20 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-primary capitalize">{r.targetType}</div>
-                      <div className="text-xs text-muted font-mono mt-0.5">{r.targetId}</div>
+                      <div className="text-xs text-secondary font-mono mt-0.5">{r.targetId}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-secondary line-clamp-2 max-w-xs" title={r.reason}>{r.reason}</div>
@@ -150,7 +150,7 @@ export default function ReportsPage() {
               <button
                 type="button"
                 onClick={() => setSelectedReport(null)}
-                className="p-2 text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface-elevated min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="p-2 text-secondary hover:text-primary transition-colors rounded-lg hover:bg-surface-elevated min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Close dialog"
               >
                 <XIcon className="w-5 h-5" />
@@ -167,12 +167,12 @@ export default function ReportsPage() {
               <div className="p-6 space-y-4">
                 <div className="p-4 bg-surface-elevated rounded-xl border border-border space-y-2">
                   <p className="text-sm">
-                    <span className="text-muted font-medium">Target:</span>{' '}
+                    <span className="text-secondary font-medium">Target:</span>{' '}
                     <span className="text-primary capitalize">{selectedReport.targetType}</span>{' '}
-                    <span className="text-muted font-mono text-xs">({selectedReport.targetId})</span>
+                    <span className="text-secondary font-mono text-xs">({selectedReport.targetId})</span>
                   </p>
                   <p className="text-sm">
-                    <span className="text-muted font-medium">Reason:</span>{' '}
+                    <span className="text-secondary font-medium">Reason:</span>{' '}
                     <span className="text-primary">{selectedReport.reason}</span>
                   </p>
                 </div>
@@ -200,7 +200,7 @@ export default function ReportsPage() {
                   <textarea
                     id="resolutionNotes"
                     name="resolutionNotes"
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none shadow-elevation-flat"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-primary placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none shadow-elevation-flat"
                     rows={4}
                     placeholder="Explain the action taken..."
                     value={notes}
