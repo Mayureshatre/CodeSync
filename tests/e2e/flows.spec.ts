@@ -136,9 +136,19 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
     await page.click('button:has-text("Accept")');
 
     // Verify Workspace is created
-    await expect(page.locator("text=Workspace")).toBeVisible();
-    await page.click("text=Workspace");
-    await expect(page.locator("text=Collaborators")).toBeVisible();
+    await expect(page.getByText("Accepted")).toBeVisible();
+    const editWorkspaceLink = page.getByRole("link", { name: "Edit Workspace" });
+    await expect(editWorkspaceLink).toBeVisible();
+    const href = await editWorkspaceLink.getAttribute("href");
+    const projectId = href?.match(/\/projects\/([^\/]+)\/edit/)?.[1];
+    expect(projectId).toBeTruthy();
+    await page.goto(`/projects/${projectId}/workspace`);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Workspace" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Activity Feed" })
+    ).toBeVisible();
   });
 
   test("Flow 4: Invite -> Accept -> Workspace", async ({ page, context }) => {
