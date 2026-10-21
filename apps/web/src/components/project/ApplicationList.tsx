@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { User, Check, X, Clock } from 'lucide-react';
+import { ApplicationStatus, getAvailableApplicationActions } from '@codesync/shared-types';
 
 interface Application {
   id: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+  status: ApplicationStatus;
   message?: string;
   role?: {
     id: string;
@@ -91,43 +92,47 @@ export function ApplicationList({ projectId }: { projectId: string }) {
   return (
     <div className="space-y-4 mt-6">
       <h3 className="text-xl font-bold tracking-tight text-primary mb-4">Applications</h3>
-      {applications.map((app) => (
-        <div key={app.id} className="bg-surface p-5 rounded-xl border border-border shadow-elevation-low">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 text-accent">
-                {app.user.profile?.avatarUrl ? (
-                  <img src={app.user.profile.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
-                ) : (
-                  <User className="w-5 h-5" />
-                )}
-              </div>
-              <div>
-                <p className="font-semibold text-primary">
-                  {app.user.profile?.displayName || app.user.email}
-                </p>
-                <div className="flex items-center gap-2 text-sm text-secondary mt-0.5">
-                  <span className="capitalize">{app.status}</span>
-                  {app.role && (
-                    <>
-                      <span>•</span>
-                      <span>Role: {app.role.title}</span>
-                    </>
-                  )}
-                  <span>•</span>
-                  <span>{new Date(app.createdAt).toLocaleDateString()}</span>
-                </div>
-                {app.message && (
-                  <p className="text-primary text-sm mt-3 bg-surface-elevated p-3 rounded-lg border border-border leading-relaxed">
-                    &quot;{app.message}&quot;
-                  </p>
-                )}
-              </div>
-            </div>
+      {applications.map((app) => {
+        const availableActions = getAvailableApplicationActions(app.status, 'owner');
+        const canAccept = availableActions.includes('accepted');
+        const canReject = availableActions.includes('rejected');
 
-            <div className="flex items-center gap-2 self-start">
-              {app.status === 'pending' && (
-                <>
+        return (
+          <div key={app.id} className="bg-surface p-5 rounded-xl border border-border shadow-elevation-low">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 text-accent">
+                  {app.user.profile?.avatarUrl ? (
+                    <img src={app.user.profile.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-primary">
+                    {app.user.profile?.displayName || app.user.email}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm text-secondary mt-0.5">
+                    <span className="capitalize">{app.status}</span>
+                    {app.role && (
+                      <>
+                        <span>•</span>
+                        <span>Role: {app.role.title}</span>
+                      </>
+                    )}
+                    <span>•</span>
+                    <span>{new Date(app.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  {app.message && (
+                    <p className="text-primary text-sm mt-3 bg-surface-elevated p-3 rounded-lg border border-border leading-relaxed">
+                      &quot;{app.message}&quot;
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start">
+                {canAccept && (
                   <button
                     onClick={() => handleStatusUpdate(app.id, 'accepted')}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-lg text-sm font-medium transition-colors"
@@ -135,6 +140,8 @@ export function ApplicationList({ projectId }: { projectId: string }) {
                     <Check className="w-4 h-4" />
                     Accept
                   </button>
+                )}
+                {canReject && (
                   <button
                     onClick={() => handleStatusUpdate(app.id, 'rejected')}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-red-600 hover:bg-red-500/20 rounded-lg text-sm font-medium transition-colors"
@@ -142,30 +149,30 @@ export function ApplicationList({ projectId }: { projectId: string }) {
                     <X className="w-4 h-4" />
                     Decline
                   </button>
-                </>
-              )}
-              {app.status === 'accepted' && (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 text-green-600 rounded-lg text-sm font-medium">
-                  <Check className="w-4 h-4" />
-                  Accepted
-                </span>
-              )}
-              {app.status === 'rejected' && (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-red-600 rounded-lg text-sm font-medium">
-                  <X className="w-4 h-4" />
-                  Declined
-                </span>
-              )}
-              {app.status === 'withdrawn' && (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-sm font-medium">
-                  <Clock className="w-4 h-4" />
-                  Withdrawn
-                </span>
-              )}
+                )}
+                {app.status === 'accepted' && (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 text-green-600 rounded-lg text-sm font-medium">
+                    <Check className="w-4 h-4" />
+                    Accepted
+                  </span>
+                )}
+                {app.status === 'rejected' && (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-red-600 rounded-lg text-sm font-medium">
+                    <X className="w-4 h-4" />
+                    Declined
+                  </span>
+                )}
+                {app.status === 'withdrawn' && (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-sm font-medium">
+                    <Clock className="w-4 h-4" />
+                    Withdrawn
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
