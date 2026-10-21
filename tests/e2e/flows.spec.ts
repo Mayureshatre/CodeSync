@@ -136,7 +136,7 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
     await page.click('button:has-text("Accept")');
 
     // Verify Workspace is created
-    await expect(page.getByText("Accepted")).toBeVisible();
+    await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
     const editWorkspaceLink = page.getByRole("link", { name: "Edit Workspace" });
     await expect(editWorkspaceLink).toBeVisible();
     const href = await editWorkspaceLink.getAttribute("href");
