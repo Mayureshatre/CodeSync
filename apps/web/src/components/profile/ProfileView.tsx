@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { InviteButton } from './InviteModal';
 
 export function ProfileView({ profile, isOwner }: { profile: any, isOwner: boolean }) {
   if (!profile) return <div className="text-primary text-center py-12">Profile not found.</div>;
@@ -26,13 +27,20 @@ export function ProfileView({ profile, isOwner }: { profile: any, isOwner: boole
               </div>
             </div>
           </div>
-          {isOwner && (
+          {isOwner ? (
             <Link
               href="/profile/edit"
               className="w-full sm:w-auto bg-surface-elevated border border-border hover:border-accent hover:text-accent text-primary font-medium py-2 px-5 rounded-xl transition-all duration-200 text-center shadow-elevation-low"
             >
               Edit Profile
             </Link>
+          ) : (
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <InviteButton
+                developerUserId={profile.userId || profile.user?.id || profile.id}
+                developerName={profile.displayName || profile.username}
+              />
+            </div>
           )}
         </div>
 
