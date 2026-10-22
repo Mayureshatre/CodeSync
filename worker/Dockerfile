@@ -31,4 +31,4 @@ WORKDIR /app/worker
 ENV NODE_ENV=production
 
 # Start the worker
-CMD ["node", "dist/index.js"]
+CMD ["pnpm", "run", "start"]
