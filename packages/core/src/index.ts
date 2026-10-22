@@ -6,3 +6,4 @@ export * from './notificationTypes';
 export * from './notificationService';
 export * from './profileUtils';
 export * from './matchingService';
+export * from './queue';

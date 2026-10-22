@@ -1,4 +1,4 @@
-﻿import { Queue } from 'bullmq';
+import { Queue } from 'bullmq';
 import { NotificationCategory } from './notificationTypes';
 
 // In a real deployed app, this uses process.env.REDIS_URL
@@ -26,6 +26,12 @@ let _reviewQueue: Queue | null = null;
 export const getReviewQueue = () => {
   if (!_reviewQueue) _reviewQueue = new Queue('review', { connection: { url: REDIS_URL } });
   return _reviewQueue;
+};
+
+let _accountQueue: Queue | null = null;
+export const getAccountQueue = () => {
+  if (!_accountQueue) _accountQueue = new Queue('account', { connection: { url: REDIS_URL } });
+  return _accountQueue;
 };
 
 export async function scheduleWeeklyDigest() {
@@ -99,5 +105,41 @@ export async function enqueueReviewVisibility(reviewId: string, delayMs: number)
   }
 }
 
+export async function enqueueAccountHardDelete(userId: string, delayMs: number) {
+  try {
+    const queue = getAccountQueue();
+    const jobId = `account-hard-delete:${userId}`;
 
+    try {
+      const existing = await queue.getJob(jobId);
+      if (existing) {
+        await existing.remove();
+      }
+    } catch {
+      // Ignore if job does not exist
+    }
 
+    await queue.add('hard-delete', { userId }, {
+      delay: delayMs,
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5000 },
+      removeOnComplete: true,
+      jobId
+    });
+  } catch (error) {
+    console.error('Failed to enqueue account hard delete', error);
+  }
+}
+
+export async function cancelAccountHardDelete(userId: string) {
+  try {
+    const queue = getAccountQueue();
+    const jobId = `account-hard-delete:${userId}`;
+    const job = await queue.getJob(jobId);
+    if (job) {
+      await job.remove();
+    }
+  } catch (error) {
+    console.error('Failed to cancel account hard delete', error);
+  }
+}

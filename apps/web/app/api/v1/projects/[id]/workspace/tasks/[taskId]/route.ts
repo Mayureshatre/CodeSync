@@ -19,6 +19,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string, 
   }
 }
 
+export { PUT as PATCH };
 export async function DELETE(req: NextRequest, { params }: { params: { id: string, taskId: string } }) {
   try {
     const session = await getCurrentSession();

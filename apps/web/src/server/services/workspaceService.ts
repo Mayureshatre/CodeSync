@@ -73,7 +73,30 @@ export async function getWorkspaceSummary(projectId: string, actorId: string) {
     include: {
       tasks: true,
       milestones: true,
-      projectLinks: true
+      projectLinks: true,
+      project: {
+        include: {
+          projectMembers: {
+            select: {
+              userId: true,
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  profile: {
+                    select: {
+                      id: true,
+                      displayName: true,
+                      username: true,
+                      avatarUrl: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   });
 }

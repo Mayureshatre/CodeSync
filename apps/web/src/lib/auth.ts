@@ -101,11 +101,12 @@ export const authOptions: NextAuthOptions = {
           select: { sessionVersion: true, role: true, status: true, profile: { select: { id: true } } }
         });
         
-        if (!dbUser || dbUser.sessionVersion !== token.sessionVersion || dbUser.status === 'suspended') {
+        if (!dbUser || dbUser.sessionVersion !== token.sessionVersion || dbUser.status === 'suspended' || dbUser.status === 'deleted') {
           // Invalidate token by clearing it
           return { ...token, exp: 0 }; 
         }
         token.role = dbUser.role; // Keep role up to date
+        token.status = dbUser.status;
         token.hasProfile = !!dbUser.profile; // Always from DB; client update() call triggers a re-read here
       }
 
@@ -117,6 +118,7 @@ export const authOptions: NextAuthOptions = {
           ...session.user,
           id: token.id as string,
           role: token.role as string,
+          status: token.status as string,
           hasProfile: token.hasProfile as boolean,
         } as any;
       } else {

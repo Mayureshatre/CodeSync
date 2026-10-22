@@ -1,4 +1,4 @@
-﻿import { prisma } from '../db';
+import { prisma } from '../db';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { ConflictError, AuthenticationError, NotFoundError } from '../errors';
@@ -151,4 +151,123 @@ export async function invalidateUserSessions(userId: string) {
     where: { id: userId },
     data: { sessionVersion: { increment: 1 } },
   });
+}
+
+export function hashPasswordResetToken(rawToken: string): string {
+  return 'pwd_' + crypto.createHash('sha256').update(rawToken).digest('hex');
+}
+
+export async function sendPasswordResetEmail(email: string, rawToken: string) {
+  const transport = getEmailTransport();
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const resetUrl = `${baseUrl}/auth/reset-password?token=${rawToken}`;
+
+  await transport.sendEmail({
+    to: email,
+    subject: 'Reset your CodeSync password',
+    textBody: `You requested a password reset. Open this link within 1 hour to reset your password: ${resetUrl}`,
+    htmlBody: `<p>You requested a password reset for your CodeSync account.</p><p><a href="${resetUrl}">Click here to reset your password</a> (valid for 1 hour).</p><p>If you did not request this, you can safely ignore this email.</p>`
+  });
+}
+
+export async function requestPasswordReset(email: string) {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  // Prevent account enumeration: return silently if user not found, not credentials, or suspended
+  if (!user || user.authProvider !== 'credentials' || user.status === 'suspended') {
+    return;
+  }
+
+  // Rate limiting: check if an active password reset token was requested within the last 60 seconds
+  const recentToken = await prisma.verificationToken.findFirst({
+    where: {
+      email,
+      token: { startsWith: 'pwd_' }
+    }
+  });
+
+  if (recentToken && (Date.now() - recentToken.createdAt.getTime() < 60000)) {
+    return;
+  }
+
+  // Generate 32 bytes (256-bit) cryptographically secure random token
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = hashPasswordResetToken(rawToken);
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour expiration
+
+  // Clear any existing password reset token for this email, then create new hashed token
+  await prisma.$transaction([
+    prisma.verificationToken.deleteMany({
+      where: {
+        email,
+        token: { startsWith: 'pwd_' }
+      }
+    }),
+    prisma.verificationToken.create({
+      data: {
+        email,
+        token: hashedToken,
+        expiresAt,
+      }
+    })
+  ]);
+
+  // Send email containing the raw token (only the hash is stored in the DB)
+  try {
+    await sendPasswordResetEmail(email, rawToken);
+  } catch (e) {
+    console.error('Failed to dispatch password reset email:', e);
+  }
+}
+
+export async function resetPassword(rawToken: string, newPassword: string) {
+  if (!rawToken || !newPassword || newPassword.length < 8) {
+    throw new AuthenticationError('Invalid reset parameters');
+  }
+
+  const hashedToken = hashPasswordResetToken(rawToken);
+  const tokenRecord = await prisma.verificationToken.findUnique({
+    where: { token: hashedToken }
+  });
+
+  if (!tokenRecord) {
+    throw new AuthenticationError('Invalid or expired password reset token');
+  }
+
+  if (tokenRecord.expiresAt < new Date()) {
+    try {
+      await prisma.verificationToken.delete({ where: { id: tokenRecord.id } });
+    } catch {
+      // ignore
+    }
+    throw new AuthenticationError('Password reset token has expired');
+  }
+
+  const user = await prisma.user.findUnique({ where: { email: tokenRecord.email } });
+  if (!user) {
+    try {
+      await prisma.verificationToken.delete({ where: { id: tokenRecord.id } });
+    } catch {
+      // ignore
+    }
+    throw new NotFoundError('User not found');
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+
+  // Invalidate all existing sessions and delete single-use token in a transaction
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        sessionVersion: { increment: 1 } // Invalidates all existing JWT sessions
+      }
+    }),
+    prisma.verificationToken.delete({
+      where: { id: tokenRecord.id } // Single-use: cannot be reused
+    })
+  ]);
+
+  return { success: true };
 }

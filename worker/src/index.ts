@@ -2,6 +2,7 @@ import { Worker } from 'bullmq';
 import { startNotificationWorker } from './notificationWorker';
 import { startDigestWorker } from './digestWorker';
 import { startReviewWorker } from './reviewWorker';
+import { startAccountWorker } from './accountWorker';
 import { scheduleWeeklyDigest } from '@codesync/core/queue';
 import { recomputeAndPersistMatch, recomputeAllForUser, recomputeAllForProject } from '@codesync/core/matchingService';
 import { validateEnv } from '@codesync/core/env';
@@ -34,6 +35,7 @@ matchingWorker.on('failed', (job, err) => {
 const notificationWorker = startNotificationWorker(REDIS_URL);
 const digestWorker = startDigestWorker(REDIS_URL);
 const reviewWorker = startReviewWorker(REDIS_URL);
+const accountWorker = startAccountWorker(REDIS_URL);
 
 // Schedule the recurring job
 scheduleWeeklyDigest().catch(console.error);
@@ -47,7 +49,8 @@ async function gracefulShutdown(signal: string) {
     matchingWorker.close(),
     notificationWorker.close(),
     digestWorker.close(),
-    reviewWorker.close()
+    reviewWorker.close(),
+    accountWorker.close()
   ]);
   console.log('Workers closed successfully.');
   process.exit(0);

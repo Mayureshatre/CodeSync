@@ -2,7 +2,7 @@ const { withSentryConfig } = require('@sentry/nextjs/config');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@codesync/ui"],
+  transpilePackages: ["@codesync/ui", "@codesync/shared-types"],
 };
 
 module.exports = withSentryConfig(
