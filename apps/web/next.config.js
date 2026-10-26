@@ -3,6 +3,9 @@ const { withSentryConfig } = require('@sentry/nextjs/config');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@codesync/ui", "@codesync/shared-types"],
+  experimental: {
+    serverComponentsExternalPackages: ["bullmq", "ioredis"],
+  },
 };
 
 module.exports = withSentryConfig(

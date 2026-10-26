@@ -1,1 +1,1 @@
-﻿export * from '@codesync/core';
+export * from '@codesync/core/notificationTypes';
