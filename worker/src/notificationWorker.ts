@@ -3,6 +3,7 @@ import { getPreferences, createNotification } from '@codesync/core/notificationS
 import { getEmailTransport } from '@codesync/core/emailTransport';
 import { NotificationJobPayload } from '@codesync/core/queue';
 import { prisma } from '@codesync/core/db';
+import { sanitizeErrorMessage } from './utils';
 
 export async function processNotificationJob(job: Job<NotificationJobPayload>) {
   const { notificationId, userId, category, payload } = job.data;
@@ -49,7 +50,7 @@ export async function processNotificationJob(job: Job<NotificationJobPayload>) {
       throw error;
     } else {
       // Permanent failure (e.g. bounce, invalid address, invalid API key in this context)
-      console.error(`[NotificationWorker] Permanent EMAIL failure for ${user.email}: ${error.message}`);
+      console.error(`[NotificationWorker] Permanent EMAIL failure for ${user.email}: ${sanitizeErrorMessage(error.message)}`);
       
       const systemInAppEnabled = prefs['SYSTEM']?.['IN_APP'] ?? true;
 
@@ -58,7 +59,7 @@ export async function processNotificationJob(job: Job<NotificationJobPayload>) {
         await createNotification(userId, 'SYSTEM', {
           event: 'EMAIL_DELIVERY_FAILED',
           category,
-          reason: error.message,
+          reason: sanitizeErrorMessage(error.message),
           originalNotificationId: notificationId
         });
       }
@@ -76,7 +77,11 @@ export function startNotificationWorker(redisUrl: string) {
   });
 
   worker.on('failed', (job, err) => {
-    console.error(`[NotificationWorker] Job ${job?.id} failed:`, err);
+    console.error(`[NotificationWorker] Job ${job?.id} failed:`, sanitizeErrorMessage(err?.message || String(err)));
+  });
+
+  worker.on('error', (err) => {
+    console.error(`[NotificationWorker] Connection error:`, sanitizeErrorMessage(err?.message || String(err)));
   });
 
   return worker;

@@ -1,6 +1,7 @@
 import { Worker } from 'bullmq';
 import { prisma } from '@codesync/core/db';
 import { createNotification } from '@codesync/core/notificationService';
+import { sanitizeErrorMessage } from './utils';
 
 export function startReviewWorker(redisUrl: string) {
   const worker = new Worker('review', async (job) => {
@@ -37,7 +38,11 @@ export function startReviewWorker(redisUrl: string) {
   }, { connection: { url: redisUrl } });
 
   worker.on('failed', (job, err) => {
-    console.error(`Review job ${job?.id} failed with error:`, err);
+    console.error(`[ReviewWorker] Job ${job?.id} failed:`, sanitizeErrorMessage(err?.message || String(err)));
+  });
+
+  worker.on('error', (err) => {
+    console.error(`[ReviewWorker] Connection error:`, sanitizeErrorMessage(err?.message || String(err)));
   });
 
   return worker;

@@ -77,7 +77,7 @@ describe('Notification Worker - processNotificationJob', () => {
       PROJECT_MATCH: { EMAIL: true, IN_APP: true },
     } as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({ email: 'test@example.com' } as any);
-    
+
     const timeoutError = new Error('Connection timeout');
     mockTransport.sendEmail.mockRejectedValueOnce(timeoutError);
 
@@ -94,7 +94,7 @@ describe('Notification Worker - processNotificationJob', () => {
       SYSTEM: { IN_APP: true, EMAIL: true }
     } as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({ email: 'bounce@example.com' } as any);
-    
+
     const bounceError = new Error('Recipient address bounced');
     mockTransport.sendEmail.mockRejectedValueOnce(bounceError);
 
@@ -110,13 +110,33 @@ describe('Notification Worker - processNotificationJob', () => {
     });
   });
 
+  it('sanitizes sensitive credentials from failure reasons before creating SYSTEM notification', async () => {
+    vi.mocked(getPreferences).mockResolvedValueOnce({
+      PROJECT_MATCH: { EMAIL: true, IN_APP: true },
+      SYSTEM: { IN_APP: true, EMAIL: true }
+    } as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({ email: 'bounce@example.com' } as any);
+
+    const bounceError = new Error('SMTP connection failed via redis://user:superSecretPassword@smtp-relay.internal:6379');
+    mockTransport.sendEmail.mockRejectedValueOnce(bounceError);
+
+    await processNotificationJob(createJob({ notificationId: 'n1', userId: 'u1', category: 'PROJECT_MATCH', payload: {} }));
+
+    expect(createNotification).toHaveBeenCalledWith('u1', 'SYSTEM', {
+      event: 'EMAIL_DELIVERY_FAILED',
+      category: 'PROJECT_MATCH',
+      reason: 'SMTP connection failed via redis://***@smtp-relay.internal:6379',
+      originalNotificationId: 'n1'
+    });
+  });
+
   it('skips SYSTEM fallback creation if SYSTEM IN_APP preference is disabled', async () => {
     vi.mocked(getPreferences).mockResolvedValueOnce({
       PROJECT_MATCH: { EMAIL: true, IN_APP: true },
       SYSTEM: { IN_APP: false, EMAIL: true }
     } as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({ email: 'bounce@example.com' } as any);
-    
+
     const bounceError = new Error('Recipient address bounced');
     mockTransport.sendEmail.mockRejectedValueOnce(bounceError);
 

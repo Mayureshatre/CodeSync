@@ -2,6 +2,7 @@ import { Worker, Job } from 'bullmq';
 import { prisma } from '@codesync/core/db';
 import { getPreferences, createNotification } from '@codesync/core/notificationService';
 import { enqueueNotification } from '@codesync/core/queue';
+import { sanitizeErrorMessage } from './utils';
 
 // Get ISO week string, e.g., "2023-W42"
 export function getWeekIdentifier(date: Date = new Date()): string {
@@ -103,7 +104,7 @@ export async function processDigestJob(job: Job) {
       
       sentCount++;
     } catch (error) {
-      console.error(`[DigestWorker] Failed to process user ${userId}`, error);
+      console.error(`[DigestWorker] Failed to process user ${userId}:`, sanitizeErrorMessage(error instanceof Error ? error.message : String(error)));
     }
   }
 
@@ -117,7 +118,11 @@ export function startDigestWorker(redisUrl: string) {
   });
 
   worker.on('failed', (job, err) => {
-    console.error(`[DigestWorker] Job ${job?.id} failed:`, err);
+    console.error(`[DigestWorker] Job ${job?.id} failed:`, sanitizeErrorMessage(err?.message || String(err)));
+  });
+
+  worker.on('error', (err) => {
+    console.error(`[DigestWorker] Connection error:`, sanitizeErrorMessage(err?.message || String(err)));
   });
 
   return worker;

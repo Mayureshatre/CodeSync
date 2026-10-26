@@ -1,6 +1,7 @@
 import { Worker, Job } from 'bullmq';
 import { prisma } from '@codesync/core/db';
 import { getAccountDeletionGraceDays } from '@codesync/core/configService';
+import { sanitizeErrorMessage } from './utils';
 
 export async function processAccountHardDeleteJob(job: Job<{ userId: string }>) {
   const { userId } = job.data;
@@ -104,7 +105,11 @@ export function startAccountWorker(redisUrl: string) {
   }, { connection: { url: redisUrl } });
 
   worker.on('failed', (job, err) => {
-    console.error(`[AccountWorker] Job ${job?.id} failed with error:`, err);
+    console.error(`[AccountWorker] Job ${job?.id} failed with error:`, sanitizeErrorMessage(err?.message || String(err)));
+  });
+
+  worker.on('error', (err) => {
+    console.error(`[AccountWorker] Connection error:`, sanitizeErrorMessage(err?.message || String(err)));
   });
 
   return worker;
