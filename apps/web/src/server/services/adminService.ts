@@ -1,5 +1,6 @@
 import { prisma } from '../db';
-import { ForbiddenError, NotFoundError, ConflictError } from '../errors';
+import { ForbiddenError, NotFoundError, ConflictError, ValidationError, sanitizeErrorMessage } from '../errors';
+import { getMatchingQueue } from '@codesync/core/queue';
 import { createNotification } from './notificationService';
 
 type Actor = { id: string; role: string };
@@ -336,4 +337,72 @@ export async function getAdminConfigs(actor: Actor) {
   return prisma.platformConfig.findMany({
     orderBy: { key: 'asc' }
   });
+}
+
+export const SMOKE_TEST_JOB_ID_REGEX = /^smoke-test-\d+-[a-z0-9]+$/;
+
+let lastSmokeTestTimestamp = 0;
+const SMOKE_TEST_DEBOUNCE_MS = 5000;
+
+export function _resetLastSmokeTestTimestampForTesting() {
+  lastSmokeTestTimestamp = 0;
+}
+
+export async function enqueueMatchingQueueSmokeTest(actor: Actor): Promise<{ jobId: string }> {
+  requireAdmin(actor);
+
+  const now = Date.now();
+  if (now - lastSmokeTestTimestamp < SMOKE_TEST_DEBOUNCE_MS) {
+    throw new ConflictError('A smoke test was enqueued recently. Please wait a few seconds before triggering another.');
+  }
+
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  const jobId = `smoke-test-${now}-${randomSuffix}`;
+
+  try {
+    const queue = getMatchingQueue();
+    // Strictly hardcode job name to 'recompute' and payload to {}
+    const job = await queue.add(
+      'recompute',
+      {},
+      {
+        jobId,
+        attempts: 1,
+        removeOnComplete: { age: 300 }, // Retain completed job metadata for 5 minutes
+        removeOnFail: { age: 300 },     // Retain failed job metadata for 5 minutes
+      }
+    );
+
+    lastSmokeTestTimestamp = now;
+
+    return { jobId: job.id || jobId };
+  } catch (error: any) {
+    throw new Error(`Queue operation failed: ${sanitizeErrorMessage(error?.message || String(error))}`);
+  }
+}
+
+export async function getMatchingQueueSmokeTestStatus(actor: Actor, jobId: string) {
+  requireAdmin(actor);
+
+  if (!jobId || !SMOKE_TEST_JOB_ID_REGEX.test(jobId)) {
+    throw new ValidationError('Invalid smoke-test job ID format. Must match smoke-test-<timestamp>-<suffix>');
+  }
+
+  const queue = getMatchingQueue();
+  const job = await queue.getJob(jobId);
+
+  if (!job) {
+    throw new NotFoundError(`Smoke test job ${jobId} not found or expired from matching queue.`);
+  }
+
+  const state = await job.getState();
+
+  return {
+    jobId: job.id || jobId,
+    name: job.name,
+    state,
+    timestamp: job.timestamp,
+    processedOn: job.processedOn ?? null,
+    finishedOn: job.finishedOn ?? null,
+  };
 }
