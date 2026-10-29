@@ -2,8 +2,45 @@ import { NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
+import { Prisma } from "@prisma/client";
 import { verifyCredentials } from "../server/services/authService";
 import { prisma } from "../server/db";
+
+// [TEMP-DIAG][AUTH_JWT] Logs safe Prisma connection-string facts and Prisma client/engine version
+// in the authentication function's own runtime.
+// Never logs the URL, hostname, username, password, database name, or query string.
+function logAuthDbConfigFacts(): void {
+  const raw = process.env.DATABASE_URL;
+  const versionInfo = Prisma.prismaVersion as { client?: string; engine?: string } | undefined;
+  const clientVer = versionInfo?.client ?? "unknown";
+  const engineVer = versionInfo?.engine ?? "unknown";
+  if (!raw) {
+    console.log(
+      `[TEMP-DIAG][AUTH_JWT] DATABASE_URL is not set. prisma_client=${clientVer} prisma_engine=${engineVer}`
+    );
+    return;
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    console.log(
+      `[TEMP-DIAG][AUTH_JWT] DATABASE_URL is set but failed URL parsing. prisma_client=${clientVer} prisma_engine=${engineVer}`
+    );
+    return;
+  }
+  const port = parsed.port ? parseInt(parsed.port, 10) : null;
+  const hasPgbouncer = parsed.searchParams.get("pgbouncer") === "true";
+  const hasConnectionLimit = parsed.searchParams.has("connection_limit");
+  const connectionLimitValue = hasConnectionLimit
+    ? parseInt(parsed.searchParams.get("connection_limit") as string, 10)
+    : null;
+  console.log(
+    `[TEMP-DIAG][AUTH_JWT] db config: port=${port ?? "none"} pgbouncer=${hasPgbouncer} ` +
+      `connection_limit=${hasConnectionLimit ? connectionLimitValue : "not set"} ` +
+      `url_parseable=true prisma_client=${clientVer} prisma_engine=${engineVer}`
+  );
+}
 
 export function getCurrentSession() {
   return getServerSession(authOptions);
@@ -71,6 +108,7 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user, account }) {
+      logAuthDbConfigFacts();
       // Initial sign in
       if (account && user) {
         if (account.provider === 'credentials') {
