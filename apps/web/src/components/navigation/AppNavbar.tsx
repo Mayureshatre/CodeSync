@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Blocks, Menu, X, Compass, FolderKanban, MessageSquare, Bell, User } from 'lucide-react';
+import { signOut } from 'next-auth/react';
+import { Blocks, Menu, X, Compass, FolderKanban, MessageSquare, Bell, User, LogOut, Loader2 } from 'lucide-react';
 
 export function AppNavbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navLinks = [
     { name: 'Explore', href: '/explore', icon: Compass },
@@ -18,6 +20,17 @@ export function AppNavbar() {
   ];
 
   const closeMenu = () => setMobileMenuOpen(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut({ callbackUrl: '/' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border h-16">
@@ -51,6 +64,23 @@ export function AppNavbar() {
               </Link>
             );
           })}
+
+          <div className="h-6 w-px bg-border mx-2" aria-hidden="true" />
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            aria-label="Log out"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] text-secondary hover:text-error hover:bg-error/10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {isLoggingOut ? (
+              <Loader2 className="w-4 h-4 animate-spin text-error" />
+            ) : (
+              <LogOut className="w-4 h-4" />
+            )}
+            <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+          </button>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -89,6 +119,26 @@ export function AppNavbar() {
               </Link>
             );
           })}
+
+          <div className="h-px bg-border my-1" aria-hidden="true" />
+
+          <button
+            type="button"
+            onClick={async () => {
+              closeMenu();
+              await handleLogout();
+            }}
+            disabled={isLoggingOut}
+            aria-label="Log out"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors min-h-[44px] text-secondary hover:text-error hover:bg-error/10 disabled:opacity-50 disabled:cursor-not-allowed w-full text-left cursor-pointer"
+          >
+            {isLoggingOut ? (
+              <Loader2 className="w-5 h-5 animate-spin text-error" />
+            ) : (
+              <LogOut className="w-5 h-5" />
+            )}
+            <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+          </button>
         </div>
       )}
     </nav>
