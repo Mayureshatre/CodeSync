@@ -169,7 +169,7 @@ export async function searchDevelopers(currentUserId: string | null, input: Deve
       EXISTS (
         SELECT 1 FROM "UserSkill" us 
         JOIN "Skill" s ON us."skillId" = s.id 
-        WHERE us."ownerId" = u.id AND s.name IN (${Prisma.join(skills)})
+        WHERE us."userId" = u.id AND s.name IN (${Prisma.join(skills)})
       )
     `);
   }

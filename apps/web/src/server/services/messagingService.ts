@@ -1,5 +1,5 @@
 import { prisma } from '../db';
-import { NotFoundError, ForbiddenError } from '../errors';
+import { NotFoundError, ForbiddenError, ValidationError } from '../errors';
 import { createNotification } from './notificationService';
 import { SendMessageInput } from '../../lib/validations/messaging';
 import { publishRealtimeEvent, getConversationChannelName } from './realtimeService';
@@ -40,6 +40,10 @@ export async function createConversation(userId: string, opts: { targetUserId?: 
   }
 
   if (opts.targetUserId) {
+    if (opts.targetUserId === userId) {
+      throw new ValidationError('Cannot create a conversation with yourself');
+    }
+
     // DM conversation
     // See if one exists between these two users
     // This is a bit tricky in Prisma without a direct query, but we can do it by finding conversations

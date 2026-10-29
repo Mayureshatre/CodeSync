@@ -33,8 +33,14 @@ export async function POST(req: NextRequest) {
     const conversation = await createConversation(session.user.id, { targetUserId, projectId });
     return NextResponse.json({ data: conversation });
   } catch (error: any) {
-    if (error.name === 'ForbiddenError' || error.name === 'NotFoundError') {
+    if (error.name === 'ValidationError') {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error.name === 'ForbiddenError') {
       return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    if (error.name === 'NotFoundError') {
+      return NextResponse.json({ error: error.message }, { status: 404 });
     }
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

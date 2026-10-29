@@ -1,14 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ConversationList } from '../../../src/components/messaging/ConversationList';
 import { MessageThread } from '../../../src/components/messaging/MessageThread';
 import { useSession } from 'next-auth/react';
 import { MessageSquareIcon, ArrowLeft } from 'lucide-react';
 
-export default function MessagingPage() {
+function MessagingContent() {
   const { data: session } = useSession();
-  const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
+  const searchParams = useSearchParams();
+  const conversationIdFromUrl = searchParams.get('conversationId') || undefined;
+
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(conversationIdFromUrl);
+
+  useEffect(() => {
+    if (conversationIdFromUrl) {
+      setActiveConversationId(conversationIdFromUrl);
+    }
+  }, [conversationIdFromUrl]);
 
   const userId = session?.user?.id;
 
@@ -55,5 +65,13 @@ export default function MessagingPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MessagingPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-secondary animate-pulse">Loading messages...</div>}>
+      <MessagingContent />
+    </Suspense>
   );
 }

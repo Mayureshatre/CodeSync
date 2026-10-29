@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { InviteButton } from './InviteModal';
 import { ReportButton } from './ReportModal';
+import { MessageButton } from './MessageButton';
 
 export function ProfileView({ profile, isOwner }: { profile: any, isOwner: boolean }) {
   if (!profile) return <div className="text-primary text-center py-12">Profile not found.</div>;
@@ -36,7 +37,11 @@ export function ProfileView({ profile, isOwner }: { profile: any, isOwner: boole
               Edit Profile
             </Link>
           ) : (
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <MessageButton
+                developerUserId={profile.userId || profile.user?.id || profile.id}
+                developerName={profile.displayName || profile.username}
+              />
               <InviteButton
                 developerUserId={profile.userId || profile.user?.id || profile.id}
                 developerName={profile.displayName || profile.username}

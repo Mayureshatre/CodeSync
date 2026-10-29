@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '../../apps/web/app/api/v1/conversations/route';
 import { createConversation } from '../../apps/web/src/server/services/messagingService';
 import { getCurrentSession } from '../../apps/web/src/lib/auth';
-import { ForbiddenError } from '../../apps/web/src/server/errors';
+import { ForbiddenError, ValidationError } from '../../apps/web/src/server/errors';
 
 vi.mock('next/server', () => {
   return {
@@ -57,6 +57,18 @@ describe('Conversations API (POST /api/v1/conversations)', () => {
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.error).toMatch(/Must specify/);
+  });
+
+  it('handles ValidationError gracefully (returns HTTP 400 for self-messaging)', async () => {
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
+    vi.mocked(createConversation).mockRejectedValueOnce(new ValidationError('Cannot create a conversation with yourself'));
+
+    const req = createRequest('/api/v1/conversations', 'POST', { targetUserId: 'user-1' });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe('Cannot create a conversation with yourself');
   });
 
   it('handles ForbiddenError gracefully (authorization error path)', async () => {

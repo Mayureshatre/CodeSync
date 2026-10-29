@@ -45,6 +45,29 @@ export function useConversations() {
   });
 }
 
+export function useCreateConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { targetUserId?: string; projectId?: string }) => {
+      const res = await fetch('/api/v1/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input)
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create conversation');
+      }
+      const json = await res.json();
+      return json.data as Conversation;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    }
+  });
+}
+
 // For polling, we will use a separate query or rely on a standard query with refetchInterval
 // But since we want cursor pagination AND polling, we usually separate them.
 // A simple approach for MVP:

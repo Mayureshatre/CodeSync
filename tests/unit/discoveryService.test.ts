@@ -145,5 +145,22 @@ describe('Discovery Service', () => {
       expect(sqlString).toContain('p.availability IN');
       expect(sqlString).toContain('p."preferredCollaboration" && ARRAY[');
     });
+
+    it('should apply skills filter using the correct UserSkill userId column', async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([]);
+
+      await searchDevelopers('user-1', {
+        limit: 10,
+        sort: 'recency',
+        skills: ['TypeScript', 'React'],
+      });
+
+      const callArgs = vi.mocked(prisma.$queryRaw).mock.calls[0][0];
+      const sqlString = Object.values(callArgs).join(' ');
+
+      expect(sqlString).toContain('"UserSkill" us');
+      expect(sqlString).toContain('us."userId" = u.id');
+      expect(sqlString).not.toContain('ownerId');
+    });
   });
 });

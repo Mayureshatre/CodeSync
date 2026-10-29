@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { prisma } from '../../apps/web/src/server/db';
-import { sendMessage, getMessages, getUserConversations, markConversationAsRead } from '../../apps/web/src/server/services/messagingService';
+import { sendMessage, getMessages, getUserConversations, markConversationAsRead, createConversation } from '../../apps/web/src/server/services/messagingService';
 import { createNotification } from '../../apps/web/src/server/services/notificationService';
 import { publishRealtimeEvent, getConversationChannelName } from '../../apps/web/src/server/services/realtimeService';
-import { ForbiddenError, NotFoundError } from '../../apps/web/src/server/errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../apps/web/src/server/errors';
 
 vi.mock('../../apps/web/src/server/db', () => ({
   prisma: {
@@ -42,6 +42,59 @@ vi.mock('../../apps/web/src/server/services/realtimeService', () => ({
 describe('Messaging Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe('Conversation Creation & Self-Messaging Guard', () => {
+    it('throws ValidationError if targetUserId matches userId (cannot message oneself)', async () => {
+      await expect(createConversation('user-1', { targetUserId: 'user-1' }))
+        .rejects.toThrow(ValidationError);
+      await expect(createConversation('user-1', { targetUserId: 'user-1' }))
+        .rejects.toThrow(/Cannot create a conversation with yourself/i);
+
+      // Verify no DB queries were executed
+      expect(prisma.conversation.findFirst).not.toHaveBeenCalled();
+      expect(prisma.conversation.create).not.toHaveBeenCalled();
+    });
+
+    it('returns existing conversation if one already exists between users (no duplicate DM)', async () => {
+      const existingConv = { id: 'conv-existing', type: 'dm' };
+      vi.mocked(prisma.conversation.findFirst).mockResolvedValueOnce(existingConv as any);
+
+      const result = await createConversation('user-1', { targetUserId: 'user-2' });
+
+      expect(prisma.conversation.findFirst).toHaveBeenCalledWith({
+        where: {
+          type: 'dm',
+          AND: [
+            { participants: { some: { userId: 'user-1' } } },
+            { participants: { some: { userId: 'user-2' } } }
+          ]
+        }
+      });
+      expect(prisma.conversation.create).not.toHaveBeenCalled();
+      expect(result).toEqual(existingConv);
+    });
+
+    it('creates new DM conversation with both participants when none exists', async () => {
+      vi.mocked(prisma.conversation.findFirst).mockResolvedValueOnce(null);
+      const newConv = { id: 'conv-new', type: 'dm' };
+      vi.mocked(prisma.conversation.create).mockResolvedValueOnce(newConv as any);
+
+      const result = await createConversation('user-1', { targetUserId: 'user-2' });
+
+      expect(prisma.conversation.create).toHaveBeenCalledWith({
+        data: {
+          type: 'dm',
+          participants: {
+            create: [
+              { userId: 'user-1' },
+              { userId: 'user-2' }
+            ]
+          }
+        }
+      });
+      expect(result).toEqual(newConv);
+    });
   });
 
   describe('Participant Authorization', () => {

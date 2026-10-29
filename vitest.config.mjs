@@ -20,6 +20,8 @@ export default defineConfig({
     alias: {
       'next-auth/react': path.resolve('apps/web/node_modules/next-auth/react'),
       'next-auth': path.resolve('apps/web/node_modules/next-auth'),
+      'next/navigation': path.resolve('apps/web/node_modules/next/navigation.js'),
+      'next': path.resolve('apps/web/node_modules/next'),
       '@': path.resolve('apps/web'),
     },
   },
