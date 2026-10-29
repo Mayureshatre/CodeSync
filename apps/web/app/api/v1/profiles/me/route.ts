@@ -5,7 +5,39 @@ import { getProfileByUserId, updateProfile, calculateProfileCompleteness } from 
 import { profileSchema } from '@/src/lib/validations/profile';
 import { DomainError } from '@/src/server/errors';
 
+// [TEMP-DIAG] Logs safe Prisma connection-string facts to Vercel logs.
+// Never logs the URL, hostname, username, password, or query string.
+// Remove this function and its two call sites once the 42P05 investigation is complete.
+function logDbConfigFacts(caller: string): void {
+  const raw = process.env.DATABASE_URL;
+  if (!raw) {
+    console.log(`[TEMP-DIAG][${caller}] DATABASE_URL is not set in this runtime.`);
+    return;
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    console.log(`[TEMP-DIAG][${caller}] DATABASE_URL is set but failed URL parsing — likely malformed.`);
+    return;
+  }
+  const port = parsed.port ? parseInt(parsed.port, 10) : null;
+  const hasPgbouncer = parsed.searchParams.get('pgbouncer') === 'true';
+  const hasConnectionLimit = parsed.searchParams.has('connection_limit');
+  const connectionLimitValue = hasConnectionLimit
+    ? parseInt(parsed.searchParams.get('connection_limit') as string, 10)
+    : null;
+  // Log only safe, non-identifying facts — not the host, user, pass, or full URL.
+  console.log(
+    `[TEMP-DIAG][${caller}] db config: port=${port ?? 'none'} pgbouncer=${hasPgbouncer} ` +
+    `connection_limit=${hasConnectionLimit ? connectionLimitValue : 'not set'} ` +
+    `url_parseable=true`
+  );
+}
+
 export async function GET(req: Request) {
+  // [TEMP-DIAG] Log before session validation so output appears even when Auth.js fails.
+  logDbConfigFacts('GET /api/v1/profiles/me');
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -22,6 +54,8 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  // [TEMP-DIAG] Log before session validation so output appears even when Auth.js fails.
+  logDbConfigFacts('PUT /api/v1/profiles/me');
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
