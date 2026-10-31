@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { searchDevelopers } from '../../../../src/server/services/discoveryService';
 import { DeveloperCard } from '../../../../src/components/discovery/DeveloperCard';
-import { Search } from 'lucide-react';
+import { ExploreSearchBar } from '../../../../src/components/discovery/ExploreSearchBar';
 
 export const metadata: Metadata = {
   title: 'Explore Developers | CodeSync',
@@ -37,16 +37,7 @@ export default async function PublicDevelopersExplore({
       </div>
 
       <div className="flex flex-col gap-6">
-        <form method="GET" action="/explore/developers" className="relative w-full max-w-3xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-          <input
-            type="text"
-            name="q"
-            defaultValue={q}
-            placeholder="Search developers..."
-            className="w-full bg-surface border border-border text-primary placeholder:text-muted rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200 shadow-elevation-flat"
-          />
-        </form>
+        <ExploreSearchBar actionPath="/explore/developers" placeholder="Search developers..." />
 
         {developers.length === 0 ? (
           <div className="text-center py-20 border-2 border-dashed border-border rounded-2xl">

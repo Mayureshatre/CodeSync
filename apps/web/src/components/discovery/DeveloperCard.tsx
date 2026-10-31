@@ -39,7 +39,7 @@ export function DeveloperCard({ developer }: DeveloperCardProps) {
         </div>
       </div>
       
-      {developer.matchScore !== undefined && (
+      {developer.matchScore != null && (
         <div className="mb-5">
           <div className="inline-flex items-center h-7 px-3 rounded-full border border-accent bg-accent/10 text-accent font-semibold font-mono text-xs tracking-wide">
             MATCH {Math.round(developer.matchScore)}%

@@ -117,6 +117,95 @@ describe('matchingService - computeMatchScore', () => {
     expect(result?.algorithmVersion).toBe(MATCHING_ALGORITHM_VERSION);
     expect(result?.explanation).toContain('Overall');
   });
+
+  it('matches developer with React and JavaScript to project requiring React and JavaScript with positive score (>80%)', () => {
+    const devReactJs = {
+      profile: {
+        availability: 'available',
+        experienceLevel: 'advanced',
+        preferredCollaboration: ['open_source', 'startup'],
+      },
+      userSkills: [
+        { skillId: 'skill-react', proficiency: 'advanced', skill: { name: 'React' } },
+        { skillId: 'skill-js', proficiency: 'expert', skill: { name: 'JavaScript' } },
+      ]
+    };
+
+    const projectReactJs = {
+      status: 'open',
+      experienceRequirement: 'intermediate',
+      collaborationType: ['open_source'],
+      tags: ['react', 'javascript'],
+      projectSkills: [
+        { skillId: 'skill-react', requirementType: 'required', minProficiency: 'intermediate', skill: { name: 'React' } },
+        { skillId: 'skill-js', requirementType: 'required', minProficiency: 'intermediate', skill: { name: 'JavaScript' } }
+      ]
+    };
+
+    const result = computeMatchScore(devReactJs, projectReactJs);
+    expect(result).not.toBeNull();
+    expect(result!.score).toBeGreaterThan(80);
+    expect(result!.factorBreakdown.skills).toBe(100);
+    expect(result!.score).not.toBe(0);
+  });
+
+  it('matches React and JavaScript by skill name when skillIds differ', () => {
+    const dev = {
+      profile: {
+        availability: 'available',
+        experienceLevel: 'intermediate',
+        preferredCollaboration: ['open_source'],
+      },
+      userSkills: [
+        { skillId: 'user-react-id', proficiency: 'advanced', skill: { name: 'React' } },
+        { skillId: 'user-js-id', proficiency: 'advanced', skill: { name: 'JavaScript' } },
+      ]
+    };
+
+    const project = {
+      status: 'open',
+      experienceRequirement: 'beginner',
+      collaborationType: ['open_source'],
+      tags: ['react'],
+      projectSkills: [
+        { skillId: 'proj-react-id', requirementType: 'required', minProficiency: 'intermediate', skill: { name: 'React' } },
+        { skillId: 'proj-js-id', requirementType: 'required', minProficiency: 'intermediate', skill: { name: 'JavaScript' } },
+      ]
+    };
+
+    const result = computeMatchScore(dev, project);
+    expect(result).not.toBeNull();
+    expect(result!.factorBreakdown.skills).toBe(100);
+    expect(result!.score).toBeGreaterThan(80);
+  });
+
+  it('returns null (absence of match) when candidate is genuinely ineligible due to missing required skill', () => {
+    const devWithoutJs = {
+      profile: {
+        availability: 'available',
+        experienceLevel: 'advanced',
+        preferredCollaboration: ['open_source'],
+      },
+      userSkills: [
+        { skillId: 'skill-react', proficiency: 'advanced', skill: { name: 'React' } },
+      ]
+    };
+
+    const projectRequiringJs = {
+      status: 'open',
+      experienceRequirement: 'intermediate',
+      collaborationType: ['open_source'],
+      tags: ['react', 'javascript'],
+      projectSkills: [
+        { skillId: 'skill-react', requirementType: 'required', minProficiency: 'intermediate', skill: { name: 'React' } },
+        { skillId: 'skill-js', requirementType: 'required', minProficiency: 'intermediate', skill: { name: 'JavaScript' } }
+      ]
+    };
+
+    const result = computeMatchScore(devWithoutJs, projectRequiringJs);
+    // Strict matching per AGENTS.md §12: absence of a match row, NOT a zero score!
+    expect(result).toBeNull();
+  });
 });
 
 describe('matchingService - recomputeAndPersistMatch', () => {

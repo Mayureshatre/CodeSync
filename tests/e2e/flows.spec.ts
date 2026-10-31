@@ -92,6 +92,7 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
   });
 
   test("Flow 3: Apply -> Accept -> Workspace", async ({ page, context }) => {
+    await context.clearCookies();
     // 1. Developer (e2e2) applies for the project
     await page.goto("/auth/login");
     await page.fill('input[name="email"]', "e2e2@example.com");
@@ -136,7 +137,7 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
     await page.click('button:has-text("Accept")');
 
     // Verify Workspace is created
-    await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
+    await expect(page.getByText(/^accepted$/i).first()).toBeVisible();
     const editWorkspaceLink = page.getByRole("link", { name: "Edit Workspace" });
     await expect(editWorkspaceLink).toBeVisible();
     const href = await editWorkspaceLink.getAttribute("href");
@@ -152,6 +153,7 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
   });
 
   test("Flow 4: Invite -> Accept -> Workspace", async ({ page, context }) => {
+    await context.clearCookies();
     // 1. Owner (e2e1) invites developer (e2e3)
     await page.goto("/auth/login");
     await page.fill('input[name="email"]', "e2e1@example.com");
@@ -208,6 +210,7 @@ test.describe.serial("M12 Critical Flows & Accessibility", () => {
       });
     }
 
+    await context.clearCookies();
     // User reports something
     await page.goto("/auth/login");
     await page.fill('input[name="email"]', "e2e1@example.com");

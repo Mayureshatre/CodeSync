@@ -1,5 +1,6 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { isPublicApiGetRequest } from "./src/lib/publicApi";
 
 export default withAuth(
   function middleware(req) {
@@ -22,6 +23,9 @@ export default withAuth(
 
     if (!isAuth) {
       if (req.nextUrl.pathname.startsWith('/api')) {
+        if (isPublicApiGetRequest(req)) {
+          return NextResponse.next();
+        }
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 

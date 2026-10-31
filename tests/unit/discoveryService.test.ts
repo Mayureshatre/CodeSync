@@ -59,9 +59,59 @@ describe('Discovery Service', () => {
       
       expect(sqlString).toContain('"ProjectSkill"');
       expect(sqlString).toContain('p.category IN');
-      expect(sqlString).toContain('p."experienceRequirement" IN');
+      expect(sqlString).toContain('LOWER(p."experienceRequirement") IN');
       expect(sqlString).toContain('p."weeklyCommitment" IN');
       expect(sqlString).toContain('p."collaborationType" && ARRAY[');
+    });
+
+    it('should normalize uppercase difficulty filter values to lowercase for case-insensitive matching', async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([]);
+
+      await searchProjects('user-1', {
+        limit: 10,
+        sort: 'recency',
+        difficulty: ['BEGINNER', 'EXPERT'],
+      });
+
+      const callArgs = vi.mocked(prisma.$queryRaw).mock.calls[0][0];
+      const sqlString = Object.values(callArgs).join(' ');
+
+      expect(sqlString).toContain('LOWER(p."experienceRequirement") IN');
+      // Verify normalized lowercase parameters
+      expect(callArgs.values).toEqual(expect.arrayContaining(['beginner', 'expert']));
+    });
+
+    it('should filter projects by duration with lowercase normalization', async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([]);
+
+      await searchProjects('user-1', {
+        limit: 10,
+        sort: 'recency',
+        duration: ['1_TO_3_MONTHS', '3_TO_6_MONTHS'],
+      });
+
+      const callArgs = vi.mocked(prisma.$queryRaw).mock.calls[0][0];
+      const sqlString = Object.values(callArgs).join(' ');
+
+      expect(sqlString).toContain('LOWER(p."durationEstimate") IN');
+      expect(callArgs.values).toEqual(expect.arrayContaining(['1_to_3_months', '3_to_6_months']));
+    });
+
+    it('should filter projects by category with case-insensitivity and ILIKE clauses', async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([]);
+
+      await searchProjects('user-1', {
+        limit: 10,
+        sort: 'recency',
+        category: ['Web Development'],
+      });
+
+      const callArgs = vi.mocked(prisma.$queryRaw).mock.calls[0][0];
+      const sqlString = Object.values(callArgs).join(' ');
+
+      expect(sqlString).toContain('p.category IN');
+      expect(sqlString).toContain('LOWER(p.category) IN');
+      expect(sqlString).toContain('p.category ILIKE');
     });
 
     it('should paginate correctly using cursor', async () => {
@@ -140,10 +190,44 @@ describe('Discovery Service', () => {
       const callArgs = vi.mocked(prisma.$queryRaw).mock.calls[0][0];
       const sqlString = Object.values(callArgs).join(' ');
       
-      expect(sqlString).toContain('p."experienceLevel" IN');
+      expect(sqlString).toContain('LOWER(p."experienceLevel") IN');
       expect(sqlString).toContain('p.location ILIKE');
       expect(sqlString).toContain('p.availability IN');
       expect(sqlString).toContain('p."preferredCollaboration" && ARRAY[');
+    });
+
+    it('should normalize uppercase developer experience values to lowercase', async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([]);
+
+      await searchDevelopers('user-1', {
+        limit: 10,
+        sort: 'recency',
+        experience: ['SENIOR', 'ADVANCED'],
+      });
+
+      const callArgs = vi.mocked(prisma.$queryRaw).mock.calls[0][0];
+      const sqlString = Object.values(callArgs).join(' ');
+
+      expect(sqlString).toContain('LOWER(p."experienceLevel") IN');
+      expect(callArgs.values).toEqual(expect.arrayContaining(['senior', 'advanced']));
+    });
+
+    it('should apply multi-skill filter using OR (IN clause) semantics within EXISTS subquery', async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([]);
+
+      await searchDevelopers('user-1', {
+        limit: 10,
+        sort: 'recency',
+        skills: ['TypeScript', 'Python'],
+      });
+
+      const callArgs = vi.mocked(prisma.$queryRaw).mock.calls[0][0];
+      const sqlString = Object.values(callArgs).join(' ');
+
+      // Validates OR semantics: subquery checks if any of the queried skills match
+      expect(sqlString).toContain('EXISTS');
+      expect(sqlString).toContain('s.name IN');
+      expect(callArgs.values).toEqual(expect.arrayContaining(['TypeScript', 'Python']));
     });
 
     it('should apply skills filter using the correct UserSkill userId column', async () => {

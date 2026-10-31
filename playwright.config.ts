@@ -24,7 +24,8 @@ export default defineConfig({
     timeout: 120 * 1000,
     env: {
       NEXTAUTH_SECRET: 'e2e-test-secret-key',
-      NEXTAUTH_URL: 'http://localhost:3000'
+      NEXTAUTH_URL: 'http://localhost:3000',
+      DATABASE_URL: process.env.DATABASE_URL || 'postgresql://codesync_e2e:password123@localhost:5434/codesync_e2e'
     }
   },
 });

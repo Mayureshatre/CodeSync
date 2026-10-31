@@ -39,19 +39,29 @@ function getProficiencyScore(proficiency: string): number {
  */
 export function computeMatchScore(user: any, project: any): MatchResult | null {
   // HARD FILTERS
-  if (user.profile.availability === 'not_looking') {
-    return null; // Hard filter: not looking
+  if (!user?.profile || user.profile.availability === 'not_looking') {
+    return null; // Hard filter: not looking or incomplete profile
   }
 
   const userSkillMap = new Map<string, number>();
   for (const us of user.userSkills || []) {
-    userSkillMap.set(us.skillId, getProficiencyScore(us.proficiency));
+    if (us.skillId) {
+      userSkillMap.set(us.skillId, getProficiencyScore(us.proficiency));
+    }
+    const skillName = us.skill?.name || us.name;
+    if (skillName) {
+      userSkillMap.set(skillName.toLowerCase(), getProficiencyScore(us.proficiency));
+    }
   }
 
   const requiredSkills = project.projectSkills?.filter((ps: any) => ps.requirementType === 'required') || [];
   
   for (const reqSkill of requiredSkills) {
-    const userProf = userSkillMap.get(reqSkill.skillId);
+    const skillName = reqSkill.skill?.name || reqSkill.name;
+    let userProf = reqSkill.skillId ? userSkillMap.get(reqSkill.skillId) : undefined;
+    if (userProf === undefined && skillName) {
+      userProf = userSkillMap.get(skillName.toLowerCase());
+    }
     if (userProf === undefined) {
       return null; // Missing required skill
     }
@@ -68,7 +78,12 @@ export function computeMatchScore(user: any, project: any): MatchResult | null {
   if (allProjectSkills.length > 0) {
     let totalRatio = 0;
     for (const ps of allProjectSkills) {
-      const userProf = userSkillMap.get(ps.skillId) || 0;
+      const skillName = ps.skill?.name || ps.name;
+      let userProf = ps.skillId ? userSkillMap.get(ps.skillId) : undefined;
+      if (userProf === undefined && skillName) {
+        userProf = userSkillMap.get(skillName.toLowerCase());
+      }
+      userProf = userProf || 0;
       const reqProf = getProficiencyScore(ps.minProficiency) || 1;
       const ratio = Math.min(userProf / reqProf, 1);
       totalRatio += ratio;
@@ -107,7 +122,9 @@ export function computeMatchScore(user: any, project: any): MatchResult | null {
   let techScore = 100;
   const projTags = project.tags || [];
   if (projTags.length > 0) {
-    const userSkillNames = (user.userSkills || []).map((us: any) => us.skill.name.toLowerCase());
+    const userSkillNames = (user.userSkills || [])
+      .map((us: any) => (us.skill?.name || us.name || '').toLowerCase())
+      .filter(Boolean);
     const matchedTags = projTags.filter((tag: string) => 
       userSkillNames.some((sn: string) => sn.includes(tag.toLowerCase()) || tag.toLowerCase().includes(sn))
     );

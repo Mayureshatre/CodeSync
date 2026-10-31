@@ -3,21 +3,43 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
-import { Blocks, Menu, X, Compass, FolderKanban, MessageSquare, Bell, User, LogOut, Loader2 } from 'lucide-react';
+import { signOut, useSession } from 'next-auth/react';
+import {
+  Blocks,
+  Menu,
+  X,
+  Compass,
+  FolderKanban,
+  MessageSquare,
+  Bell,
+  User,
+  LogOut,
+  Loader2,
+} from 'lucide-react';
 
 export function AppNavbar() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const navLinks = [
+  const isAuthenticated = status === 'authenticated' && !!session;
+  const isLoadingSession = status === 'loading';
+
+  const publicNavLinks = [
     { name: 'Explore', href: '/explore', icon: Compass },
     { name: 'Projects', href: '/projects', icon: FolderKanban },
+  ];
+
+  const protectedNavLinks = [
     { name: 'Messages', href: '/messages', icon: MessageSquare },
     { name: 'Notifications', href: '/notifications', icon: Bell },
     { name: 'Profile', href: '/profile', icon: User },
   ];
+
+  const navLinks = isAuthenticated
+    ? [...publicNavLinks, ...protectedNavLinks]
+    : publicNavLinks;
 
   const closeMenu = () => setMobileMenuOpen(false);
 
@@ -53,6 +75,7 @@ export function AppNavbar() {
               <Link
                 key={link.name}
                 href={link.href}
+                prefetch={true}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] ${
                   isActive
                     ? 'bg-accent/10 text-accent'
@@ -67,20 +90,43 @@ export function AppNavbar() {
 
           <div className="h-6 w-px bg-border mx-2" aria-hidden="true" />
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            aria-label="Log out"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] text-secondary hover:text-error hover:bg-error/10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          >
-            {isLoggingOut ? (
-              <Loader2 className="w-4 h-4 animate-spin text-error" />
-            ) : (
-              <LogOut className="w-4 h-4" />
-            )}
-            <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-          </button>
+          {isLoadingSession ? (
+            <div
+              data-testid="navbar-auth-loading"
+              className="w-24 h-9 rounded-xl bg-border/40 animate-pulse my-auto"
+              aria-label="Loading session"
+            />
+          ) : isAuthenticated ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              aria-label="Log out"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] text-secondary hover:text-error hover:bg-error/10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isLoggingOut ? (
+                <Loader2 className="w-4 h-4 animate-spin text-error" />
+              ) : (
+                <LogOut className="w-4 h-4" />
+              )}
+              <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link
+                href="/auth/login"
+                className="text-secondary hover:text-primary transition-colors min-h-[44px] px-3 flex items-center text-sm font-medium"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="bg-primary text-background hover:opacity-90 px-4 py-2 rounded-xl transition-all duration-200 min-h-[44px] flex items-center justify-center text-sm font-medium shadow-elevation-low"
+              >
+                Get Started
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -122,23 +168,44 @@ export function AppNavbar() {
 
           <div className="h-px bg-border my-1" aria-hidden="true" />
 
-          <button
-            type="button"
-            onClick={async () => {
-              closeMenu();
-              await handleLogout();
-            }}
-            disabled={isLoggingOut}
-            aria-label="Log out"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors min-h-[44px] text-secondary hover:text-error hover:bg-error/10 disabled:opacity-50 disabled:cursor-not-allowed w-full text-left cursor-pointer"
-          >
-            {isLoggingOut ? (
-              <Loader2 className="w-5 h-5 animate-spin text-error" />
-            ) : (
-              <LogOut className="w-5 h-5" />
-            )}
-            <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-          </button>
+          {isLoadingSession ? (
+            <div className="w-full h-11 rounded-xl bg-border/40 animate-pulse my-2" />
+          ) : isAuthenticated ? (
+            <button
+              type="button"
+              onClick={async () => {
+                closeMenu();
+                await handleLogout();
+              }}
+              disabled={isLoggingOut}
+              aria-label="Log out"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors min-h-[44px] text-secondary hover:text-error hover:bg-error/10 disabled:opacity-50 disabled:cursor-not-allowed w-full text-left cursor-pointer"
+            >
+              {isLoggingOut ? (
+                <Loader2 className="w-5 h-5 animate-spin text-error" />
+              ) : (
+                <LogOut className="w-5 h-5" />
+              )}
+              <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2 pt-1">
+              <Link
+                href="/auth/login"
+                onClick={closeMenu}
+                className="text-secondary hover:text-primary transition-colors px-4 py-3 min-h-[44px] flex items-center rounded-xl font-medium"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/auth/signup"
+                onClick={closeMenu}
+                className="bg-primary text-background hover:opacity-90 px-4 py-3 rounded-xl transition-all duration-200 min-h-[44px] flex items-center justify-center font-medium"
+              >
+                Get Started
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </nav>

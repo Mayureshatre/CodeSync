@@ -8,17 +8,19 @@ const nextConfig = {
   },
 };
 
-module.exports = withSentryConfig(
-  nextConfig,
-  {
-    silent: true,
-    org: "codesync",
-    project: "codesync-web",
-  },
-  {
-    widenClientFileUpload: true,
-    transpileClientSDK: true,
-    hideSourceMaps: true,
-    disableLogger: true,
-  }
-);
+module.exports = process.env.SENTRY_DSN
+  ? withSentryConfig(
+      nextConfig,
+      {
+        silent: true,
+        org: "codesync",
+        project: "codesync-web",
+      },
+      {
+        widenClientFileUpload: true,
+        transpileClientSDK: true,
+        hideSourceMaps: true,
+        disableLogger: true,
+      }
+    )
+  : nextConfig;

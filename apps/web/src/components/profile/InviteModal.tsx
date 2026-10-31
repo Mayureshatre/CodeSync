@@ -109,7 +109,6 @@ export function InviteModal({
       }
 
       setIsSuccess(true);
-      router.refresh();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -117,12 +116,19 @@ export function InviteModal({
     }
   };
 
+  const handleClose = () => {
+    if (isSuccess) {
+      router.refresh();
+    }
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
       <div className="bg-surface w-full max-w-lg rounded-2xl border border-border shadow-elevation-overlay p-6 relative">
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 text-muted hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Close dialog"
         >
@@ -144,7 +150,7 @@ export function InviteModal({
             </p>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-5 py-2.5 bg-accent text-white font-medium rounded-xl hover:opacity-90 transition-all min-h-[44px]"
             >
               Close

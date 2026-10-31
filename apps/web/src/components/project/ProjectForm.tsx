@@ -12,6 +12,19 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
   const [error, setError] = useState<string | null>(null);
   const [skillSearchQuery, setSkillSearchQuery] = useState('');
   const [skillSearchResults, setSkillSearchResults] = useState<any[]>([]);
+  const [skillNameMap, setSkillNameMap] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    if (initialData?.projectSkills) {
+      for (const ps of initialData.projectSkills) {
+        if (ps.skillId && ps.skill?.name) {
+          map[ps.skillId] = ps.skill.name;
+        } else if (ps.skillId && ps.name) {
+          map[ps.skillId] = ps.name;
+        }
+      }
+    }
+    return map;
+  });
 
   const { register, control, handleSubmit, formState: { errors, isSubmitting }, watch, setValue } = useForm<any>({
     resolver: zodResolver(projectSchema),
@@ -179,7 +192,14 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
                   key={skill.id}
                   type="button"
                   onClick={() => {
-                    appendSkill({ skillId: skill.id, requirementType: 'required', minProficiency: 'intermediate' } as any);
+                    setSkillNameMap(prev => ({ ...prev, [skill.id]: skill.name }));
+                    appendSkill({
+                      skillId: skill.id,
+                      name: skill.name,
+                      skill: { id: skill.id, name: skill.name },
+                      requirementType: 'required',
+                      minProficiency: 'intermediate',
+                    } as any);
                     setSkillSearchQuery('');
                     setSkillSearchResults([]);
                   }}
@@ -194,26 +214,35 @@ export function ProjectForm({ projectId, initialData }: { projectId?: string, in
 
         {skillFields.length > 0 ? (
           <div className="space-y-3">
-            {skillFields.map((field, index) => (
-              <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-background p-4 rounded-xl border border-border shadow-elevation-low transition-all">
-                <span className="text-primary flex-1 font-medium text-sm">Skill ID: {(field as any).skillId}</span>
-                <div className="flex gap-3">
-                  <select {...register(`projectSkills.${index}.requirementType`)} className="bg-surface text-primary text-sm border border-border focus:border-accent focus:ring-1 focus:ring-accent/20 outline-none rounded-lg px-2 py-1.5 transition-all">
-                    <option value="required">Required</option>
-                    <option value="preferred">Preferred</option>
-                  </select>
-                  <select {...register(`projectSkills.${index}.minProficiency`)} className="bg-surface text-primary text-sm border border-border focus:border-accent focus:ring-1 focus:ring-accent/20 outline-none rounded-lg px-2 py-1.5 transition-all">
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                    <option value="expert">Expert</option>
-                  </select>
-                  <button type="button" onClick={() => removeSkill(index)} className="text-muted hover:text-error hover:bg-error/10 p-1.5 rounded-lg transition-colors" title="Remove Skill">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+            {skillFields.map((field, index) => {
+              const skillDisplayName =
+                (field as any).skill?.name ||
+                (field as any).name ||
+                skillNameMap[(field as any).skillId] ||
+                (field as any).skillId;
+
+              return (
+                <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-background p-4 rounded-xl border border-border shadow-elevation-low transition-all">
+                  <input type="hidden" {...register(`projectSkills.${index}.skillId`)} defaultValue={(field as any).skillId} />
+                  <span className="text-primary flex-1 font-medium text-sm">{skillDisplayName}</span>
+                  <div className="flex gap-3">
+                    <select {...register(`projectSkills.${index}.requirementType`)} className="bg-surface text-primary text-sm border border-border focus:border-accent focus:ring-1 focus:ring-accent/20 outline-none rounded-lg px-2 py-1.5 transition-all">
+                      <option value="required">Required</option>
+                      <option value="preferred">Preferred</option>
+                    </select>
+                    <select {...register(`projectSkills.${index}.minProficiency`)} className="bg-surface text-primary text-sm border border-border focus:border-accent focus:ring-1 focus:ring-accent/20 outline-none rounded-lg px-2 py-1.5 transition-all">
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                      <option value="expert">Expert</option>
+                    </select>
+                    <button type="button" onClick={() => removeSkill(index)} className="text-muted hover:text-error hover:bg-error/10 p-1.5 rounded-lg transition-colors" title="Remove Skill">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="w-full py-6 text-center border-2 border-dashed border-border rounded-xl">

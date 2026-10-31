@@ -12,7 +12,7 @@ function buildTsQuery(q: string) {
 
 export async function searchProjects(userId: string | null, input: ProjectSearchInput) {
   const parsed = projectSearchSchema.parse(input);
-  const { q, cursor, limit, sort, skills, category, difficulty, availability, projectType } = parsed;
+  const { q, cursor, limit, sort, skills, category, duration, difficulty, availability, projectType } = parsed;
 
   const conditions: Prisma.Sql[] = [Prisma.sql`p.status = 'open'`]; // Hide drafts/paused
   
@@ -34,11 +34,19 @@ export async function searchProjects(userId: string | null, input: ProjectSearch
   }
 
   if (category && category.length > 0) {
-    conditions.push(Prisma.sql`p.category IN (${Prisma.join(category)})`);
+    const normalizedCategory = category.map(c => c.toLowerCase());
+    const ilikeClauses = category.map(c => Prisma.sql`p.category ILIKE ${'%' + c + '%'}`);
+    conditions.push(Prisma.sql`(p.category IN (${Prisma.join(category)}) OR LOWER(p.category) IN (${Prisma.join(normalizedCategory)}) OR ${Prisma.join(ilikeClauses, ' OR ')})`);
+  }
+
+  if (duration && duration.length > 0) {
+    const normalizedDuration = duration.map(d => d.toLowerCase());
+    conditions.push(Prisma.sql`LOWER(p."durationEstimate") IN (${Prisma.join(normalizedDuration)})`);
   }
   
   if (difficulty && difficulty.length > 0) {
-    conditions.push(Prisma.sql`p."experienceRequirement" IN (${Prisma.join(difficulty)})`);
+    const normalizedDifficulty = difficulty.map(d => d.toLowerCase());
+    conditions.push(Prisma.sql`LOWER(p."experienceRequirement") IN (${Prisma.join(normalizedDifficulty)})`);
   }
 
   if (availability && availability.length > 0) {
@@ -149,7 +157,8 @@ export async function searchDevelopers(currentUserId: string | null, input: Deve
   }
 
   if (experience && experience.length > 0) {
-    conditions.push(Prisma.sql`p."experienceLevel" IN (${Prisma.join(experience)})`);
+    const normalizedExperience = experience.map(e => e.toLowerCase());
+    conditions.push(Prisma.sql`LOWER(p."experienceLevel") IN (${Prisma.join(normalizedExperience)})`);
   }
 
   if (location) {

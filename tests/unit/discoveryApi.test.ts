@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET as getProjects } from '../../apps/web/app/api/v1/projects/route';
+import { GET as getProjects, POST as postProjects } from '../../apps/web/app/api/v1/projects/route';
 import { GET as getDevelopers } from '../../apps/web/app/api/v1/developers/route';
 import { GET as getRecommendedDevelopers } from '../../apps/web/app/api/v1/matches/developers/route';
 import { searchProjects, searchDevelopers } from '../../apps/web/src/server/services/discoveryService';
@@ -68,6 +68,34 @@ describe('Discovery APIs', () => {
       }));
     });
 
+    it('should allow unauthenticated access and pass null userId to searchProjects', async () => {
+      vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
+      vi.mocked(searchProjects).mockResolvedValueOnce({ items: [], nextCursor: undefined });
+
+      const req = createMockRequest('http://localhost/api/v1/projects?q=react');
+      const res = await getProjects(req);
+
+      expect(res.status).toBe(200);
+      expect(searchProjects).toHaveBeenCalledWith(null, expect.objectContaining({
+        q: 'react',
+      }));
+    });
+
+    it('should parse duration and category query params and pass them to searchProjects', async () => {
+      vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
+      vi.mocked(searchProjects).mockResolvedValueOnce({ items: [], nextCursor: undefined });
+
+      const req = createMockRequest('http://localhost/api/v1/projects?category=Web%20Development&duration=1_to_3_months&difficulty=intermediate');
+      const res = await getProjects(req);
+
+      expect(res.status).toBe(200);
+      expect(searchProjects).toHaveBeenCalledWith(null, expect.objectContaining({
+        category: ['Web Development'],
+        duration: ['1_to_3_months'],
+        difficulty: ['intermediate'],
+      }));
+    });
+
     it('should return 400 on validation error (e.g. limit too high)', async () => {
       vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
 
@@ -93,6 +121,34 @@ describe('Discovery APIs', () => {
         experience: ['advanced'],
         projectInterests: ['startup']
       }));
+    });
+
+    it('should allow unauthenticated access and pass null userId to searchDevelopers', async () => {
+      vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
+      vi.mocked(searchDevelopers).mockResolvedValueOnce({ items: [], nextCursor: undefined });
+
+      const req = createMockRequest('http://localhost/api/v1/developers?q=Elena');
+      const res = await getDevelopers(req);
+
+      expect(res.status).toBe(200);
+      expect(searchDevelopers).toHaveBeenCalledWith(null, expect.objectContaining({
+        q: 'Elena',
+      }));
+    });
+  });
+
+  describe('POST /api/v1/projects', () => {
+    it('should reject unauthenticated project creation with 401', async () => {
+      vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
+
+      const req = {
+        json: async () => ({ name: 'Test Project' }),
+      } as Request;
+
+      const res = await postProjects(req);
+      expect(res.status).toBe(401);
+      const json = await (res as any).json();
+      expect(json.error).toBe('Unauthorized');
     });
   });
 

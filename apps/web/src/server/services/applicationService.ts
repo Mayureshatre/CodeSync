@@ -23,6 +23,12 @@ export async function applyToProject(userId: string, projectId: string, data: Ap
     throw new ForbiddenError('Project owners cannot apply to their own project');
   }
 
+  // Require email verification per SRS 12.1 and ARCHITECTURE §8
+  const applicant = await prisma.user.findUnique({ where: { id: userId } });
+  if (applicant && !applicant.emailVerifiedAt) {
+    throw new ForbiddenError('Email must be verified before applying to a project');
+  }
+
   // Only open projects can receive applications
   if (project.status !== 'open') {
     throw new ConflictError('Project is not open for applications');

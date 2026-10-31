@@ -11,6 +11,8 @@ export async function getProfileByUserId(userId: string) {
       user: {
         select: {
           email: true,
+          emailVerifiedAt: true,
+          authProvider: true,
           userSkills: {
             include: { skill: true }
           }

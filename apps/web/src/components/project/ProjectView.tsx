@@ -3,6 +3,7 @@ import { Calendar, Users, MapPin, Globe, CheckCircle2 } from 'lucide-react';
 import { PublishButton } from './PublishButton';
 import { ApplyButton } from './ApplyModal';
 import { ApplicationList } from './ApplicationList';
+import { MatchPreviewCard } from './MatchPreviewCard';
 
 export function ProjectView({ project, isOwner }: { project: any, isOwner: boolean }) {
   if (!project) return (
@@ -169,6 +170,11 @@ export function ProjectView({ project, isOwner }: { project: any, isOwner: boole
           </div>
         </div>
       </div>
+
+      {/* Match Preview for Draft Projects */}
+      {isOwner && project.status === 'draft' && (
+        <MatchPreviewCard projectId={project.id} />
+      )}
     </div>
   );
 }

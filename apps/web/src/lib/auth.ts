@@ -2,45 +2,8 @@ import { NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
-import { Prisma } from "@prisma/client";
 import { verifyCredentials } from "../server/services/authService";
 import { prisma } from "../server/db";
-
-// [TEMP-DIAG][AUTH_JWT] Logs safe Prisma connection-string facts and Prisma client/engine version
-// in the authentication function's own runtime.
-// Never logs the URL, hostname, username, password, database name, or query string.
-function logAuthDbConfigFacts(): void {
-  const raw = process.env.DATABASE_URL;
-  const versionInfo = Prisma.prismaVersion as { client?: string; engine?: string } | undefined;
-  const clientVer = versionInfo?.client ?? "unknown";
-  const engineVer = versionInfo?.engine ?? "unknown";
-  if (!raw) {
-    console.log(
-      `[TEMP-DIAG][AUTH_JWT] DATABASE_URL is not set. prisma_client=${clientVer} prisma_engine=${engineVer}`
-    );
-    return;
-  }
-  let parsed: URL;
-  try {
-    parsed = new URL(raw);
-  } catch {
-    console.log(
-      `[TEMP-DIAG][AUTH_JWT] DATABASE_URL is set but failed URL parsing. prisma_client=${clientVer} prisma_engine=${engineVer}`
-    );
-    return;
-  }
-  const port = parsed.port ? parseInt(parsed.port, 10) : null;
-  const hasPgbouncer = parsed.searchParams.get("pgbouncer") === "true";
-  const hasConnectionLimit = parsed.searchParams.has("connection_limit");
-  const connectionLimitValue = hasConnectionLimit
-    ? parseInt(parsed.searchParams.get("connection_limit") as string, 10)
-    : null;
-  console.log(
-    `[TEMP-DIAG][AUTH_JWT] db config: port=${port ?? "none"} pgbouncer=${hasPgbouncer} ` +
-      `connection_limit=${hasConnectionLimit ? connectionLimitValue : "not set"} ` +
-      `url_parseable=true prisma_client=${clientVer} prisma_engine=${engineVer}`
-  );
-}
 
 export function getCurrentSession() {
   return getServerSession(authOptions);
@@ -90,12 +53,12 @@ export const authOptions: NextAuthOptions = {
           return '/auth/login?error=AccountSuspended';
         }
         if (!existingUser) {
-          // Auto-register OAuth users
+          // Auto-register OAuth users (OAuth emails are pre-verified by provider)
           await prisma.user.create({
             data: {
               email: user.email,
               authProvider: account.provider,
-              emailVerifiedAt: new Date(), // OAuth is trusted
+              emailVerifiedAt: new Date(),
             }
           });
         } else {
@@ -108,7 +71,6 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user, account }) {
-      logAuthDbConfigFacts();
       // Initial sign in
       if (account && user) {
         if (account.provider === 'credentials') {
@@ -117,6 +79,7 @@ export const authOptions: NextAuthOptions = {
             token.id = dbUser.id;
             token.sessionVersion = dbUser.sessionVersion;
             token.role = dbUser.role;
+            token.emailVerified = !!dbUser.emailVerifiedAt;
           }
         } else if (account.provider === 'google' || account.provider === 'github') {
           if (user.email) {
@@ -125,18 +88,18 @@ export const authOptions: NextAuthOptions = {
               token.id = dbUser.id;
               token.sessionVersion = dbUser.sessionVersion;
               token.role = dbUser.role;
+              token.emailVerified = !!dbUser.emailVerifiedAt;
             }
           }
         }
       }
       
       // Enforce the generation timestamp/counter during server-side authentication.
-      // hasProfile is always read from the DB — never from the client-supplied session payload —
-      // so a client cannot forge hasProfile=true without an actual persisted profile.
+      // hasProfile and emailVerified are always read from DB so client cannot forge them.
       if (token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { sessionVersion: true, role: true, status: true, profile: { select: { id: true } } }
+          select: { sessionVersion: true, role: true, status: true, emailVerifiedAt: true, profile: { select: { id: true } } }
         });
         
         if (!dbUser || dbUser.sessionVersion !== token.sessionVersion || dbUser.status === 'suspended' || dbUser.status === 'deleted') {
@@ -145,7 +108,8 @@ export const authOptions: NextAuthOptions = {
         }
         token.role = dbUser.role; // Keep role up to date
         token.status = dbUser.status;
-        token.hasProfile = !!dbUser.profile; // Always from DB; client update() call triggers a re-read here
+        token.hasProfile = !!dbUser.profile; // Always from DB
+        token.emailVerified = !!dbUser.emailVerifiedAt;
       }
 
       return token;
@@ -158,6 +122,7 @@ export const authOptions: NextAuthOptions = {
           role: token.role as string,
           status: token.status as string,
           hasProfile: token.hasProfile as boolean,
+          emailVerified: token.emailVerified as boolean,
         } as any;
       } else {
         // Force session to expire if token was invalidated

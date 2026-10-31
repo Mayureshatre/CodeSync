@@ -21,6 +21,9 @@ vi.mock('../../apps/web/src/server/db', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn(),
+    },
     $transaction: vi.fn((callback) => callback(prisma)),
   }
 }));
@@ -43,6 +46,7 @@ import { enqueueNotification } from '@codesync/core/queue';
 describe('applicationService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'dev1', emailVerifiedAt: new Date() } as any);
   });
 
   describe('applyToProject', () => {
@@ -56,6 +60,13 @@ describe('applicationService', () => {
       vi.mocked(prisma.project.findUnique).mockResolvedValue({ id: 'p1', ownerId: 'dev1', status: 'open' } as any);
       await expect(applyToProject('dev1', 'p1', { message: 'Hello world!' }))
         .rejects.toThrow(ForbiddenError);
+    });
+
+    it('throws ForbiddenError if applicant email is unverified', async () => {
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({ id: 'p1', ownerId: 'owner1', status: 'open' } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'dev1', emailVerifiedAt: null } as any);
+      await expect(applyToProject('dev1', 'p1', { message: 'Hello world!' }))
+        .rejects.toThrow('Email must be verified before applying to a project');
     });
 
     it('throws ConflictError if project is not open', async () => {

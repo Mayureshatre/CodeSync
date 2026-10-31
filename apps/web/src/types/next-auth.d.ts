@@ -10,6 +10,7 @@ declare module 'next-auth' {
       role?: string;
       status?: string;
       hasProfile?: boolean;
+      emailVerified?: boolean;
     }
   }
 }
